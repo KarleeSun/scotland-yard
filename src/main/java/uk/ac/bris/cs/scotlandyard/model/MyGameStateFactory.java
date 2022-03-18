@@ -3,7 +3,10 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
@@ -145,6 +148,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         public ImmutableSet<Piece> getWinner() {
             //no available moves for all detectives
             Set <Piece> allDetectivesPiece = new HashSet<>();
+            System.out.println("------------------");
             System.out.println("remaining: " + remaining);
             System.out.println("mr X location: " + mrX);
             for(Player ds : detectives) {
@@ -154,13 +158,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
             for(Player d : detectives){
                 System.out.println("Detective: " + d);
                 System.out.println("available moves: " + getAvailableMoves());
+                System.out.println("------------------");
+
                 //same location
                 if(d.location() == mrX.location()){
                     System.out.println("mr X captured, return: " + allDetectivesPiece);
                     return ImmutableSet.copyOf(allDetectivesPiece);
                 }
                 //no available moves for detectives d when all detectives have moved
-                if(remaining.contains(mrX.piece()) && getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == d.piece())){
+                if(!remaining.contains(mrX.piece()) || getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == d.piece())){
                     noAvailableMovesForAllDetectives = false;
                 }
                 if(noAvailableMovesForAllDetectives) System.out.println("detectives no moves");
@@ -181,7 +187,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 System.out.println("mr X no available moves, return: " + allDetectivesPiece);
                 return ImmutableSet.copyOf(allDetectivesPiece);
             }
-            System.out.println("return empty winner");
+//            System.out.println("return empty winner");
             return ImmutableSet.of();
 
 
@@ -354,6 +360,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
         @Override
         public GameState advance(Move move){
+            System.out.println("mr X before move: " + mrX);
+
             System.out.println("moves: " + move);
 //            System.out.println("move :" + move);
 //            System.out.println("moves:" + moves);
@@ -374,12 +382,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     Piece currentPiece = move.commencedBy();
                     Ticket ticketUsed = move.ticket;
                     Player currentPlayer = mrX;
-                    //if current player is detective, give ticket to mr X
+                    // check if move is made by detectives
                     for (Player detective : detectives) {
                         if (detective.piece() == currentPiece) {
-                            Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
-                            mrXTickets.putAll(mrX.tickets());
-                            mrXTickets.replace(ticketUsed, mrX.tickets().get(ticketUsed) + 1);
                             currentPlayer = detective;
                         }
                     }
@@ -421,6 +426,19 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     return new Player(mrX.piece(), immutableUpdatedMap, move.destination2);
                 }
             });
+            //give ticket to mr
+            Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
+            mrXTickets.putAll(mrX.tickets());
+
+            Player whoGiveToMrX = getPlayer(updatedNewPlayer.piece());
+            for(Ticket t : whoGiveToMrX.tickets().keySet()){
+                if(!updatedNewPlayer.tickets().get(t).equals(whoGiveToMrX.tickets().get(t))){
+                    mrXTickets.replace(t, mrX.tickets().get(t) + 1);
+                }
+            }
+            ImmutableMap<Ticket, Integer> immutableMrXTicket = ImmutableMap.copyOf(mrXTickets);
+            Player updatedMrX = new Player(mrX.piece(),immutableMrXTicket, mrX.location());
+
             //swap to next players turn, if no player left, swap to mrX's turn
             //if it's mrX turn, swap to detectives' turn by add all detectives into the remaining list
             Set<Piece> updatedRemaining = new HashSet<>();
@@ -435,24 +453,23 @@ public final class MyGameStateFactory implements Factory<GameState> {
             else if (updatedRemaining.isEmpty()){
                 updatedRemaining.add(mrX.piece());
             }
-            Player updatedMrX = updatedNewPlayer;
             List<Player> updatedDetectives = new ArrayList<>();
             updatedDetectives.addAll(detectives);
             if(move.commencedBy().isMrX()) {
                 updatedMrX = updatedNewPlayer;
             }
-            else{
-                updatedMrX = mrX;
                 for(Player d : detectives){
                     if(updatedNewPlayer.piece().equals(d.piece())){
                         updatedDetectives.add(updatedDetectives.indexOf(d), updatedNewPlayer);
                         updatedDetectives.remove(d);
                     }
                 }
-            }
             // make things immutable
             ImmutableSet<Piece> immutableUpdatedRemaining = ImmutableSet.copyOf(updatedRemaining);
             ImmutableList<LogEntry> immutableUpdatedLog = ImmutableList.copyOf(updatedLog);
+            System.out.println("mr X: " + updatedMrX);
+            System.out.println("detectives: " + updatedDetectives);
+
             return new MyGameState(setup, immutableUpdatedRemaining, immutableUpdatedLog, updatedMrX, updatedDetectives);
 
         }
