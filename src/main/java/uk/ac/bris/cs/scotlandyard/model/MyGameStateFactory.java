@@ -195,8 +195,21 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
             Set<Move> availableMoves = new HashSet<>();
+            //check if game over
+            for(Player d : detectives){
+                if(mrX.location() == d.location()){
+                    return ImmutableSet.copyOf(availableMoves);
+                }
+            }
+            ////check if there is still round left for moves
+//            if (setup.moves.size()-log.size() < 1) {
+//                ImmutableSet<Move> emptyMove = ImmutableSet.copyOf(availableMoves);
+//                return emptyMove;
+//            }
             //set mr X as default current player
             Player currentPlayer = mrX;
+//            Piece currentPiece;
+//            currentPiece = remaining.iterator().next();
             for(Piece currentPiece : remaining) {
                 System.out.println("current piece: "+currentPiece);
                 if (currentPiece.isMrX() && (setup.moves.size() - log.size() > 1)) {
