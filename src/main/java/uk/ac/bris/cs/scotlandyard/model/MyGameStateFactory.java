@@ -389,11 +389,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
                         }
                     }
                     //if it's mrX's move, add move to the log (determine whether its reveal or hidden)
+                    System.out.println("size of moves "+ setup.moves.size()+ " "+ updatedLog.size() );
                     if(currentPlayer.isMrX()){
-                        if(REVEAL_MOVES.contains(updatedLog.size() + 1)){
-                            updatedLog.add(LogEntry.reveal(ticketUsed, move.source()));
+                        if(REVEAL_MOVES.contains(updatedLog.size() + setup.moves.size())){
+                            System.out.println("reveal");
+                            updatedLog.add(LogEntry.reveal(ticketUsed, move.destination));
                         }
                         else{
+                            System.out.println("hidden");
                             updatedLog.add(LogEntry.hidden(ticketUsed));
                         }
                     }
