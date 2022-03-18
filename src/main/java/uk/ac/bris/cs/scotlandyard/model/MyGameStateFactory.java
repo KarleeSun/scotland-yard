@@ -141,8 +141,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
         public ImmutableSet<Piece> getWinner() {
             System.out.println("winner");
-            Set<Piece> pieceOfDetectives = Set.copyOf(getPlayers());
-            pieceOfDetectives.remove(mrX.piece());
+            Set<Piece> pieceOfDetectives = new HashSet<>();
+            for(Player d: detectives){
+                pieceOfDetectives.add(d.piece());
+            }
+//            Set<Piece> pieceOfDetectives = Set.copyOf(getPlayers());
+//            pieceOfDetectives.remove(mrX.piece());
+            System.out.println("piece of detectives: "+pieceOfDetectives);
             Set<Piece> winner = new HashSet<>();
             Piece currentPiece = remaining.iterator().next();
             Boolean haveAvailableMoves = false;
@@ -182,6 +187,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 }
             }
 
+            System.out.println("winner: "+ winner);
             return ImmutableSet.of();
         }
 
