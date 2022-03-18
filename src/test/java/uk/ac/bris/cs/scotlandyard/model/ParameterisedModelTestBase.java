@@ -246,7 +246,9 @@ import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.readGraph;
 
 	static void assertGameIsOver(@Nonnull Board game) {
 		assertThat(game.getWinner()).isNotEmpty();
+		System.out.println("test: getWinner is not empty");
 		assertThat(game.getAvailableMoves()).isEmpty(); // should be empty once winner exists
+		System.out.println("test: get available moves is empty");
 	}
 
 	static void assertGameIsNotOver(@Nonnull Board game) {
