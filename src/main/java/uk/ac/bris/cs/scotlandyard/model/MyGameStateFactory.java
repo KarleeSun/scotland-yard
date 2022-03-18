@@ -359,7 +359,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
                             ? LogEntry.reveal(move.ticket2, move.destination2)
                             : LogEntry.hidden(move.ticket2));
                     //update ticket state
-                    Map<ScotlandYard.Ticket, Integer> updatedMap = Map.copyOf(mrX.tickets());
+                    Map<ScotlandYard.Ticket, Integer> updatedMap = new HashMap<>();
+                    updatedMap.putAll(mrX.tickets());
                     updatedMap.replace(move.ticket1, mrX.tickets().get(move.ticket1) - 1);
                     updatedMap.replace(move.ticket2, mrX.tickets().get(move.ticket2) - 1);
                     ImmutableMap<ScotlandYard.Ticket, Integer> immutableUpdatedMap = ImmutableMap.copyOf(updatedMap);
@@ -371,7 +372,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
             //if it's mrX turn, swap to detectives' turn by add all detectives into the remaining list
             Set<Piece> updatedRemaining = new HashSet<>();
             updatedRemaining.addAll(remaining);
-            updatedRemaining.remove(updatedRemaining.iterator().next());
+            updatedRemaining.remove(move.commencedBy());
             if(updatedNewPlayer.isMrX()) {
                 for(Player d : detectives){
                     updatedRemaining.add(d.piece());
