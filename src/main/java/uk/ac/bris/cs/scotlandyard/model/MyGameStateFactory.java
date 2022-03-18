@@ -202,17 +202,23 @@ public final class MyGameStateFactory implements Factory<GameState> {
 //            }
             //set mr X as default current player
             Player currentPlayer = mrX;
-            Piece currentPiece;
-            currentPiece = remaining.iterator().next();
-            if (currentPiece.isMrX() && (setup.moves.size()-log.size() > 1)) {
-                availableMoves.addAll(makeDoubleMoves(setup, detectives, currentPlayer, currentPlayer.location()));
-            } else {
-                for (Player detective : detectives) {
-                    if (detective.piece() == currentPiece)
-                        currentPlayer = detective;
+//            Piece currentPiece;
+//            currentPiece = remaining.iterator().next();
+            for(Piece currentPiece : remaining) {
+                System.out.println("current piece: "+currentPiece);
+                if (currentPiece.isMrX() && (setup.moves.size() - log.size() > 1)) {
+                    availableMoves.addAll(makeDoubleMoves(setup, detectives, currentPlayer, currentPlayer.location()));
+                    System.out.println("available moves: "+ availableMoves);
+                } else {
+                    for (Player detective : detectives) {
+                        if (detective.piece() == currentPiece)
+                            currentPlayer = detective;
+                    }
                 }
+                availableMoves.addAll(makeSingleMoves(setup, detectives, currentPlayer, currentPlayer.location()));
+                System.out.println("available moves: "+ availableMoves);
             }
-            availableMoves.addAll(makeSingleMoves(setup, detectives, currentPlayer, currentPlayer.location()));
+            System.out.println("available moves: "+moves);
             ImmutableSet<Move> moves = ImmutableSet.copyOf(availableMoves);
             return moves;
         }
@@ -301,7 +307,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         public GameState advance(Move move){
             System.out.println("move :" + move);
             System.out.println("moves:" + moves);
-            if(!remaining.iterator().next().equals(move.commencedBy())){
+            if(!remaining.contains(move.commencedBy())){
                 return new MyGameState(setup,remaining,log,mrX,detectives);
             }
             if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
@@ -321,7 +327,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     //if current player is detective, give ticket to mr X
                     for (Player detective : detectives) {
                         if (detective.piece() == currentPiece) {
-                            Map<ScotlandYard.Ticket, Integer> mrXTickets = Map.copyOf(mrX.tickets());
+                            Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
+                            mrXTickets.putAll(mrX.tickets());
                             mrXTickets.replace(ticketUsed, mrX.tickets().get(ticketUsed) + 1);
                             currentPlayer = detective;
                         }
@@ -375,7 +382,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 updatedRemaining.add(mrX.piece());
             }
             Player updatedMrX = updatedNewPlayer;
-            List<Player> updatedDetectives = List.copyOf(detectives);
+            List<Player> updatedDetectives = new ArrayList<>();
+            updatedDetectives.addAll(detectives);
             if(move.commencedBy().isMrX()) {
                 updatedMrX = updatedNewPlayer;
             }
