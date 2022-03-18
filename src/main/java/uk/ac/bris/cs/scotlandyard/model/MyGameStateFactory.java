@@ -156,6 +156,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
             }
             Boolean noAvailableMovesForAllDetectives = true;
             for(Player d : detectives){
+                System.out.println("remaining: " + remaining);
                 System.out.println("Detective: " + d);
                 System.out.println("available moves: " + getAvailableMoves());
                 System.out.println("------------------");
@@ -166,7 +167,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     return ImmutableSet.copyOf(allDetectivesPiece);
                 }
                 //no available moves for detectives d when all detectives have moved
-                if(!remaining.contains(mrX.piece()) || getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == d.piece())){
+                if(remaining.contains(mrX.piece()) || getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == d.piece())){
                     noAvailableMovesForAllDetectives = false;
                 }
                 if(noAvailableMovesForAllDetectives) System.out.println("detectives no moves");
@@ -182,8 +183,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 return ImmutableSet.of(mrX.piece());
             }
             //mr X no available moves
-            if(remaining.contains(mrX.piece())
-                    && getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == mrX.piece())){
+            if(!remaining.contains(mrX.piece()) || getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == mrX.piece())){
                 System.out.println("mr X no available moves, return: " + allDetectivesPiece);
                 return ImmutableSet.copyOf(allDetectivesPiece);
             }
@@ -389,14 +389,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
                         }
                     }
                     //if it's mrX's move, add move to the log (determine whether its reveal or hidden)
-                    System.out.println("size of moves "+ setup.moves.size()+ " "+ updatedLog.size() );
                     if(currentPlayer.isMrX()){
-                        if(REVEAL_MOVES.contains(updatedLog.size() + setup.moves.size())){
-                            System.out.println("reveal");
-                            updatedLog.add(LogEntry.reveal(ticketUsed, move.destination));
+                        if(REVEAL_MOVES.contains(updatedLog.size() + 1)){
+                            updatedLog.add(LogEntry.reveal(ticketUsed, move.source()));
+                            System.out.println("tried to add");
                         }
                         else{
-                            System.out.println("hidden");
                             updatedLog.add(LogEntry.hidden(ticketUsed));
                         }
                     }
@@ -424,6 +422,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     updatedMap.putAll(mrX.tickets());
                     updatedMap.replace(move.ticket1, mrX.tickets().get(move.ticket1) - 1);
                     updatedMap.replace(move.ticket2, mrX.tickets().get(move.ticket2) - 1);
+                    updatedMap.replace(Ticket.DOUBLE, mrX.tickets().get(Ticket.DOUBLE) - 1);
                     ImmutableMap<ScotlandYard.Ticket, Integer> immutableUpdatedMap = ImmutableMap.copyOf(updatedMap);
                     //update mr X's position
                     return new Player(mrX.piece(), immutableUpdatedMap, move.destination2);
@@ -432,7 +431,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
             //give ticket to mr
             Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
             mrXTickets.putAll(mrX.tickets());
-
             Player whoGiveToMrX = getPlayer(updatedNewPlayer.piece());
             for(Ticket t : whoGiveToMrX.tickets().keySet()){
                 if(!updatedNewPlayer.tickets().get(t).equals(whoGiveToMrX.tickets().get(t))){
