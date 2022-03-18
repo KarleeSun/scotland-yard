@@ -55,5 +55,6 @@ public final class LogEntry implements Serializable {
 		LogEntry logEntry = (LogEntry) o;
 		return location == logEntry.location && ticket == logEntry.ticket;
 	}
+
 	@Override public int hashCode() { return Objects.hash(ticket, location); }
 }
