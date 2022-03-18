@@ -50,6 +50,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.mrX = mrX;
 			this.detectives = detectives;
             this.moves = getAvailableMoves();
+            this.winner = getWinner();
+
 			//error checking
 			if (setup.moves.isEmpty()) throw new IllegalArgumentException("Empty Move.");
 			if (detectives.isEmpty()) throw new IllegalArgumentException("Empty Detectives.");
@@ -299,13 +301,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
         @Override
         public GameState advance(Move move){
-            System.out.println("move :" + move);
-            System.out.println("moves:" + moves);
-            if(!remaining.iterator().next().equals(move.commencedBy())){
+            System.out.println("move :" + move); //current move
+            System.out.println("moves:" + moves); //all available moves
+            if(!remaining.iterator().next().equals(move.commencedBy())){ //if move ends return to next game state
                 return new MyGameState(setup,remaining,log,mrX,detectives);
             }
             if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
             if(!getAvailableMoves().contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
+
             //implements:
             // 1. add move to log if it's mr X's move
             // 2. update tickets state(include giving to mrX
@@ -321,12 +324,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     //if current player is detective, give ticket to mr X
                     for (Player detective : detectives) {
                         if (detective.piece() == currentPiece) {
-                            Map<ScotlandYard.Ticket, Integer> mrXTickets = Map.copyOf(mrX.tickets());
-                            mrXTickets.replace(ticketUsed, mrX.tickets().get(ticketUsed) + 1);
                             currentPlayer = detective;
+                            Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
+                            mrXTickets.putAll(mrX.tickets());
+                            mrXTickets.replace(ticketUsed, mrX.tickets().get(ticketUsed) + 1);
                         }
                     }
-                    //if it's mrX's move, add move to the log (determine whether its reveal or hidden)
+                    //if it's mrX's move, add move to the log (determine whether it's reveal or hidden)
                     if(currentPlayer.isMrX()){
                         updatedLog.add(REVEAL_MOVES.contains(log.size()+1)
                                 ? LogEntry.reveal(ticketUsed, move.destination)
@@ -352,7 +356,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
                             ? LogEntry.reveal(move.ticket2, move.destination2)
                             : LogEntry.hidden(move.ticket2));
                     //update ticket state
-                    Map<ScotlandYard.Ticket, Integer> updatedMap = Map.copyOf(mrX.tickets());
+                    Map<ScotlandYard.Ticket, Integer> updatedMap = new HashMap<>();
+                    updatedMap.putAll(mrX.tickets());
                     updatedMap.replace(move.ticket1, mrX.tickets().get(move.ticket1) - 1);
                     updatedMap.replace(move.ticket2, mrX.tickets().get(move.ticket2) - 1);
                     ImmutableMap<ScotlandYard.Ticket, Integer> immutableUpdatedMap = ImmutableMap.copyOf(updatedMap);
@@ -364,8 +369,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
             //if it's mrX turn, swap to detectives' turn by add all detectives into the remaining list
             Set<Piece> updatedRemaining = new HashSet<>();
             updatedRemaining.addAll(remaining);
-            updatedRemaining.remove(updatedRemaining.iterator().next());
             if(updatedNewPlayer.isMrX()) {
+                updatedRemaining.remove(updatedRemaining.iterator().next());
                 for(Player d : detectives){
                     updatedRemaining.add(d.piece());
                 }
