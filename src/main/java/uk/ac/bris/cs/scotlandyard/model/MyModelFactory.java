@@ -35,7 +35,6 @@ public final class MyModelFactory implements Factory<Model> {
 		this.detectives = detectives;
 		this.gameState = new MyGameStateFactory().build(setup, mrX, detectives);
 		this.observers = new HashSet<>();
-
 		}
 		@Nonnull
 		@Override
@@ -87,6 +86,9 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void registerObserver(@Nonnull Observer observer) {
+			if(observers.contains(observer)){
+				throw new IllegalArgumentException("Observer already registered.");
+			}
 		    if(observer == null) throw new NullPointerException("No observer");
 			observers.add(observer);
 		}
@@ -112,7 +114,8 @@ public final class MyModelFactory implements Factory<Model> {
 				observer.onModelChanged(getCurrentBoard(),event);
 
 				}
-			} else{
+			}
+			else{
 				for(Observer observer : observers){
 					event = Observer.Event.GAME_OVER;
 					observer.onModelChanged(getCurrentBoard(),event);
