@@ -3,6 +3,7 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
@@ -36,7 +37,49 @@ public final class MyModelFactory implements Factory<Model> {
 		@Nonnull
 		@Override
 		public Board getCurrentBoard() {
-			return null;
+			return new Board() {
+                @Nonnull
+                @Override
+                public GameSetup getSetup() {
+                    return gameState.getSetup();
+                }
+
+                @Nonnull
+                @Override
+                public ImmutableSet<Piece> getPlayers() {
+                    return gameState.getPlayers();
+                }
+
+                @Nonnull
+                @Override
+                public Optional<Integer> getDetectiveLocation(Piece.Detective detective) {
+                    return gameState.getDetectiveLocation(detective);
+                }
+
+                @Nonnull
+                @Override
+                public Optional<TicketBoard> getPlayerTickets(Piece piece) {
+                    return gameState.getPlayerTickets(piece);
+                }
+
+                @Nonnull
+                @Override
+                public ImmutableList<LogEntry> getMrXTravelLog() {
+                    return gameState.getMrXTravelLog();
+                }
+
+                @Nonnull
+                @Override
+                public ImmutableSet<Piece> getWinner() {
+                    return gameState.getWinner();
+                }
+
+                @Nonnull
+                @Override
+                public ImmutableSet<Move> getAvailableMoves() {
+                    return gameState.getAvailableMoves();
+                }
+            };
 		}
 
 		@Override
