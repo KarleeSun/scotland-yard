@@ -86,6 +86,9 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void registerObserver(@Nonnull Observer observer) {
+			if(observers.contains(observer)){
+				throw new IllegalArgumentException("Observer already registered.");
+			}
 			observers.add(observer);
 		}
 
@@ -104,15 +107,14 @@ public final class MyModelFactory implements Factory<Model> {
 		public void chooseMove(@Nonnull Move move) {
 			Observer.Event event;
 			if(gameState.getWinner().isEmpty()){
-				for(Observer observer : observers){
 				event = Observer.Event.MOVE_MADE;
-				observer.onModelChanged(getCurrentBoard(),event);
-
+				for(Observer observer : observers){
+					observer.onModelChanged(getCurrentBoard(),event);
 				}
 			}
 			else{
+				event = Observer.Event.GAME_OVER;
 				for(Observer observer : observers){
-					event = Observer.Event.GAME_OVER;
 					observer.onModelChanged(getCurrentBoard(),event);
 				}
 			}
