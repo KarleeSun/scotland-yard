@@ -34,8 +34,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
 	}
 
-
-
 	private final class MyGameState implements GameState {
 		private GameSetup setup;
 		private ImmutableSet<Piece> remaining;

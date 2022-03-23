@@ -19,8 +19,21 @@ public final class MyModelFactory implements Factory<Model> {
 
 		// TODO
 		throw new RuntimeException("Implement me!");
-	}
+
+
+    }
+
+
+
 	private final class MyModel implements Model{
+
+	    private MyModel(final GameSetup setup,
+                final Player mrX,
+                final ImmutableList<Player> detectives){
+
+        }
+
+
 		private Set<Observer> observers;
 
 		@Nonnull
