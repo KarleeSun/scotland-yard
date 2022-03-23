@@ -100,9 +100,18 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(@Nonnull Move move) {
-			for(Observer observer : observers){
-//				observer.getUpdate(this);
+			Observer.Event event;
+			if(gameState.getWinner().isEmpty()){
+				for(Observer observer : observers){
+				event = Observer.Event.MOVE_MADE;
+				}
 			}
+			else{
+				for(Observer observer : observers){
+					event = Observer.Event.GAME_OVER;
+				}
+			}
+
 		}
 
 	}
