@@ -7,17 +7,29 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableSet;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
+import java.util.Optional;
+
 /**
  * cw-model
  * Stage 2: Complete this class
  */
 public final class MyModelFactory implements Factory<Model> {
+    @Nonnull @Override public Model build(GameSetup setup,
+                                          Player mrX,
+                                          ImmutableList<Player> detectives){
+
+        // TODO
+        throw new RuntimeException("Implement me!");
+    }
+
+
 	private final class MyModel implements Model{
+
 
 		@Nonnull
 		@Override
 		public Board getCurrentBoard() {
-			return null;
+
 		}
 
 		@Override
@@ -41,12 +53,6 @@ public final class MyModelFactory implements Factory<Model> {
 
 		}
 	}
-	@Nonnull @Override public Model build(GameSetup setup,
-										  Player mrX,
-										  ImmutableList<Player> detectives){
 
-		// TODO
-		throw new RuntimeException("Implement me!");
-	}
 
 }
