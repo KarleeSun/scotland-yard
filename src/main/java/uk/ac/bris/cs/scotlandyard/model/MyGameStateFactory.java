@@ -70,8 +70,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						throw new IllegalArgumentException("Duplicate Location.");
 				}
 			}
-            System.out.println("--------------------");
-            System.out.println("mrX loc: "+mrX.location());
+            System.out.println("----------game state----------");
+//            System.out.println("mrX loc: "+mrX.location());
 		}
 		
 		public Player getPlayer(Piece piece){
@@ -148,48 +148,52 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
         public ImmutableSet<Piece> getWinner() {
+		    //detectives如果下一轮无路可走了那他也输了
             //no available moves for all detectives
             Set <Piece> allDetectivesPiece = new HashSet<>();
-//            System.out.println("------------------");
-//            System.out.println("remaining: " + remaining);
-//            System.out.println("mr X location: " + mrX);
+            System.out.println("------get winner---------");
+            System.out.println("log.size()= "+log.size());
+            System.out.println("setup.moves.size = "+setup.moves.size());
+            System.out.println("remaining = "+remaining);
             for(Player ds : detectives) {
                 allDetectivesPiece.add(ds.piece());
             }
             Boolean noAvailableMovesForAllDetectives = true;
             for(Player d : detectives){
-//                System.out.println("remaining: " + remaining);
-//                System.out.println("Detective: " + d);
-//                System.out.println("available moves: " + getAvailableMoves());
-//                System.out.println("------------------");
-
                 //same location
                 if(d.location() == mrX.location()){
                     System.out.println("mr X captured, return: " + allDetectivesPiece);
+                    System.out.println("1. remaining = "+remaining);
                     return ImmutableSet.copyOf(allDetectivesPiece);
                 }
                 //no available moves for detectives d when all detectives have moved
                 if(remaining.contains(mrX.piece()) || getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == d.piece())){
                     noAvailableMovesForAllDetectives = false;
                 }
-                //if(noAvailableMovesForAllDetectives) System.out.println("detectives no moves");
+//                if(getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == d.piece())){
+//                    noAvailableMovesForAllDetectives = false;
+//                }
             }
             //all detectives have made moves
             if(noAvailableMovesForAllDetectives){
                 //System.out.println("detectives no available moves, return: " + mrX.piece());
+                System.out.println("2. remaining = "+remaining);
                 return ImmutableSet.of(mrX.piece());
             }
             //mr X not being caught and game finished
-            if(log.size() == moves.size()){
+            if(log.size() == setup.moves.size()){
 //                System.out.println("Mr X till finished, return: " + mrX.piece());
+                System.out.println("3. remaining = "+remaining);
                 return ImmutableSet.of(mrX.piece());
             }
             //mr X no available moves
             if(!remaining.contains(mrX.piece()) || getAvailableMoves().stream().noneMatch(m -> m.commencedBy() == mrX.piece())){
 //                System.out.println("mr X no available moves, return: " + allDetectivesPiece);
+                System.out.println("4. remaining = "+remaining);
                 return ImmutableSet.copyOf(allDetectivesPiece);
             }
 //            System.out.println("return empty winner");
+            System.out.println("5. remaining = "+remaining);
             return ImmutableSet.of();
 
 
@@ -218,7 +222,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 //            }
 //
 //            //the situation that mrX wins
-//            if (log.size() == moves.size()) {
+//            if (log.size() == setup.moves.size()) {
 //                winner.add(mrX.piece());
 //                System.out.println("4 winner: "+ winner);
 //                return ImmutableSet.copyOf(winner);
@@ -245,6 +249,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
+            System.out.println("--get available moves--");
             Set<Move> availableMoves = new HashSet<>();
             //check if game over
             for(Player d : detectives){
@@ -271,7 +276,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 availableMoves.addAll(makeSingleMoves(setup, detectives, currentPlayer, currentPlayer.location()));
 
             }
-//            System.out.println("available moves: "+moves);
+            System.out.println("available moves: "+moves);
             ImmutableSet<Move> moves = ImmutableSet.copyOf(availableMoves);
             return moves;
         }
@@ -372,7 +377,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
             updatedLog.addAll(log);
             //count current moves
             long movesCount = setup.moves.stream().filter(b -> b.equals(true)).count();
-            System.out.println("count moves: "+movesCount);
+            //System.out.println("count moves: "+movesCount);
             int round = (int) (movesCount);
             //int round = (int) (log.size()+movesCount);
 
@@ -472,11 +477,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
             ImmutableSet<Piece> immutableUpdatedRemaining = ImmutableSet.copyOf(updatedRemaining);
             ImmutableList<LogEntry> immutableUpdatedLog = ImmutableList.copyOf(updatedLog);
             updatedLog.clear();
-//            System.out.println("mr X: " + updatedMrX);
-//            System.out.println("detectives: " + updatedDetectives);
 
             return new MyGameState(setup, immutableUpdatedRemaining, immutableUpdatedLog, updatedMrX, updatedDetectives);
-
         }
+
 	}
 }
