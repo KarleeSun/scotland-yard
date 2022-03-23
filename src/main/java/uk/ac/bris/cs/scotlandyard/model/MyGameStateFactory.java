@@ -174,18 +174,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     return ImmutableSet.of(mrX.piece());
                 }
             }
-            //return MrX if detectives no tickets
-
-            Boolean noTicketsForAllDetectives = true;
-            for(Player detective : detectives){
-                for(Ticket t : detective.tickets().keySet()){
-                    if(!detective.tickets().get(t).equals(0)){
-                        noTicketsForAllDetectives = false;
-                    }
-                }
-            }
-            if(noTicketsForAllDetectives) {
-                System.out.println("detectives no tickets");
+            //game over after all moves used
+            if(log.size() == setup.moves.size()){
                 return ImmutableSet.of(mrX.piece());
             }
 
