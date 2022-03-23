@@ -12,6 +12,9 @@
 1. 删掉没用的sout
 2. 把用piece得到player的循环都用getPlayer函数代替
 
+<br>
+<br>
+<br>
 
 # Xbot (AI of mr X)
 ## Documents:
