@@ -26,6 +26,7 @@ public final class MyModelFactory implements Factory<Model> {
 		private ImmutableList<Player> detectives;
 		private Board.GameState gameState;
 		private Set<Observer> observers;
+		private Board currentBoard;
 
 		private MyModel(GameSetup setup,
 						Player mrX,
@@ -35,11 +36,12 @@ public final class MyModelFactory implements Factory<Model> {
 		this.detectives = detectives;
 		this.gameState = new MyGameStateFactory().build(setup, mrX, detectives);
 		this.observers = new HashSet<>();
+		this.currentBoard = getCurrentBoard();
 		}
 		@Nonnull
 		@Override
 		public Board getCurrentBoard() {
-			return new Board() {
+			Board currentBoard = new Board() {
                 @Nonnull
                 @Override
                 public GameSetup getSetup() {
@@ -82,20 +84,24 @@ public final class MyModelFactory implements Factory<Model> {
                     return gameState.getAvailableMoves();
                 }
             };
+			return currentBoard;
 		}
 
 		@Override
 		public void registerObserver(@Nonnull Observer observer) {
+            if(observer == null) throw new NullPointerException("No observer");
 			if(observers.contains(observer)){
 				throw new IllegalArgumentException("Observer already registered.");
 			}
-		    if(observer == null) throw new NullPointerException("No observer");
 			observers.add(observer);
 		}
 
 		@Override
 		public void unregisterObserver(@Nonnull Observer observer) {
             if(observer == null) throw new NullPointerException("No observer");
+            if(!observers.contains(observer)){
+                throw new IllegalArgumentException("Observer has never been registered.");
+            }
 			observers.remove(observer);
 		}
 
@@ -107,20 +113,17 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(@Nonnull Move move) {
-			Observer.Event event;
-			if(gameState.getWinner().isEmpty()){
-				for(Observer observer : observers){
-				event = Observer.Event.MOVE_MADE;
-				observer.onModelChanged(getCurrentBoard(),event);
+            // TODO Advance the model with move, then notify all observers of what what just happened.
+            //  you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
+            Observer.Event event;
+		    gameState = gameState.advance(move);
+		    currentBoard = getCurrentBoard();
 
-				}
-			}
-			else{
-				for(Observer observer : observers){
-					event = Observer.Event.GAME_OVER;
-					observer.onModelChanged(getCurrentBoard(),event);
-				}
-			}
+            for (Observer observer: observers){
+                if(gameState.getWinner().isEmpty()) event= Observer.Event.MOVE_MADE;
+                else event= Observer.Event.GAME_OVER;
+                observer.onModelChanged(currentBoard,event);
+            }
 		}
 	}
 }
