@@ -100,20 +100,23 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(@Nonnull Move move) {
+            // TODO Advance the model with move, then notify all observers of what what just happened.
+            //  you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
 			Observer.Event event;
 			if(gameState.getWinner().isEmpty()){
 				for(Observer observer : observers){
 				event = Observer.Event.MOVE_MADE;
+				observer.onModelChanged(getCurrentBoard(),event);
 				}
 			}
 			else{
 				for(Observer observer : observers){
 					event = Observer.Event.GAME_OVER;
+                    observer.onModelChanged(getCurrentBoard(),event);
 				}
 			}
 
 		}
-
 	}
 
 }
