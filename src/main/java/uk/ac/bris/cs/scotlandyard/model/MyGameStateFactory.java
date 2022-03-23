@@ -16,10 +16,6 @@ import uk.ac.bris.cs.scotlandyard.model.Move.*;
 import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 
-import static uk.ac.bris.cs.scotlandyard.model.Piece.Detective.BLUE;
-import static uk.ac.bris.cs.scotlandyard.model.Piece.Detective.GREEN;
-import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.REVEAL_MOVES;
-import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.defaultDetectiveTickets;
 
 /**
  * cw-model
