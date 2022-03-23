@@ -3,6 +3,7 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -33,6 +34,7 @@ public final class MyModelFactory implements Factory<Model> {
 		this.mrX = mrX;
 		this.detectives = detectives;
 		this.gameState = new MyGameStateFactory().build(setup, mrX, detectives);
+		this.observers = new HashSet<>();
 		}
 		@Nonnull
 		@Override
@@ -104,16 +106,16 @@ public final class MyModelFactory implements Factory<Model> {
 			if(gameState.getWinner().isEmpty()){
 				for(Observer observer : observers){
 				event = Observer.Event.MOVE_MADE;
+				observer.onModelChanged(getCurrentBoard(),event);
+
 				}
 			}
 			else{
 				for(Observer observer : observers){
 					event = Observer.Event.GAME_OVER;
+					observer.onModelChanged(getCurrentBoard(),event);
 				}
 			}
-
 		}
-
 	}
-
 }
