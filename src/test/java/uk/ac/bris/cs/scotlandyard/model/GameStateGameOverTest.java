@@ -157,7 +157,7 @@ public class GameStateGameOverTest extends ParameterisedModelTestBase {
 		// no detectives can move at this point, allowing MrX to escape
 		assertGameIsNotOver(state);
 	}
-//GameOver: Winner is not empty, available moves is empty
+
 	@Test public void testGameNotOverBeforeAnyMoveWithNonTerminatingConfiguration() {
 		var mrX = new Player(MRX, defaultMrXTickets(), 86);
 		var firstDetective = new Player(BLUE, defaultDetectiveTickets(), 108);
@@ -186,7 +186,6 @@ public class GameStateGameOverTest extends ParameterisedModelTestBase {
 		var mrX = new Player(MRX, defaultMrXTickets(), 86);
 		var blue = new Player(BLUE, makeTickets(1, 0, 0, 0, 0), 108);
 		GameState state = gameStateFactory.build(standard24MoveSetup(), mrX, blue);
-		System.out.println("test initialise done");
 		state = state.advance(taxi(MRX, 86, 104));
 		state = state.advance(taxi(BLUE, 108, 105)); // blue uses his last move
 		assertGameIsOver(state);

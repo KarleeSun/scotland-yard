@@ -152,4 +152,5 @@ public class ModelObserverTest extends ParameterisedModelTestBase {
 		return Mockito.argThat(b -> snapshot.equals(new ImmutableBoard(b)));
 	}
 
+
 }
