@@ -307,10 +307,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				 */
 				@Override
 				public Player visit(DoubleMove move) {
-					updatedLog.add(setup.moves.get(updatedLog.size()) == true
+					updatedLog.add(setup.moves.get(updatedLog.size())
 							? LogEntry.reveal(move.ticket1, move.destination1)
 							: LogEntry.hidden(move.ticket1));
-					updatedLog.add(setup.moves.get(updatedLog.size()) == true
+					updatedLog.add(setup.moves.get(updatedLog.size())
 							? LogEntry.reveal(move.ticket2, move.destination2)
 							: LogEntry.hidden(move.ticket2));
 					//update ticket state
@@ -340,7 +340,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//if it's mrX turn, swap to detectives' turn by add all detectives into the remaining list
 			Set<Piece> updatedRemaining = new HashSet<>();
 			for(Piece p : remaining){
-				Player player = getPlayer(p);
 				if(!giveMoves(List.of(getPlayer(p))).isEmpty()){
 					updatedRemaining.add(p);
 				}
