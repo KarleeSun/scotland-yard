@@ -340,9 +340,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//if it's mrX turn, swap to detectives' turn by add all detectives into the remaining list
 			Set<Piece> updatedRemaining = new HashSet<>();
 			for(Piece p : remaining){
-				Boolean stillCanMove = false;
 				Player player = getPlayer(p);
-				if(!giveMoves(List.of(getPlayer(p))).isEmpty());{
+				if(!giveMoves(List.of(getPlayer(p))).isEmpty()){
 					updatedRemaining.add(p);
 				}
 			}
