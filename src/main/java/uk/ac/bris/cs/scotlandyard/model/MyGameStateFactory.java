@@ -198,7 +198,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 				//iterate through set containing all possible transportation from source to destination
 				if (notOccupied) {
-					if (player.hasAtLeast(Ticket.SECRET, 1)){
+					if (player.hasAtLeast(Ticket.SECRET, 1)){          /* with SECRET MOVES */
 						possibleMoves.add(new SingleMove(player.piece(), source, Ticket.SECRET, d));
 					}
 					for (Transport t : setup.graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
@@ -255,62 +255,42 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public GameState advance(Move move){
-			System.out.println(">advance being called.");
-//            System.out.println("mr X before move: " + mrX);
-			System.out.println("remaining: " + remaining + ", " + getPlayer(remaining.iterator().next()));
-			System.out.println("available moves: " + getAvailableMoves());
 			//error checking
 			if(!remaining.contains(move.commencedBy())) return new MyGameState(setup,remaining,log,mrX,detectives);
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			if(!getAvailableMoves().contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
-
-			//implements:
-			// 1. add move to log if it's mr X's move
-			// 2. update tickets state(include giving to mrX
-			// 3. update player's position
 			List<LogEntry> updatedLog = new ArrayList<>();
 			updatedLog.addAll(log);
-
-			//using visitor pattern to get information of the player
+			//using visitor pattern to get information of the player who made the move
 			Player updatedNewPlayer = move.accept(new Visitor<Player>() {
 				@Override
 				public Player visit(SingleMove move) {
-					Piece currentPiece = move.commencedBy();
-					Ticket ticketUsed = move.ticket;
-					Player currentPlayer = mrX;
-					// check if move is made by detectives
-					for (Player detective : detectives) {
+					final Piece currentPiece = move.commencedBy();
+					final Ticket ticketUsed = move.ticket;
+					Player currentPlayer = mrX;                    /* set mrX as default currentPlayer*/
+					for (Player detective : detectives) {          /* check if move made by detective*/
 						if (detective.piece() == currentPiece) {
 							currentPlayer = detective;
 						}
 					}
 					//if it's mrX's move, add move to the log (determine whether its reveal or hidden)
 					if(currentPlayer.isMrX()){
-						//System.out.println("updated log size: "+ updatedLog.size());
-						if(setup.moves.get(updatedLog.size()) == true){
-							updatedLog.add(LogEntry.reveal(ticketUsed, move.destination));
-						} else{
-							updatedLog.add(LogEntry.hidden(ticketUsed));
-						}
+						updatedLog.add(setup.moves.get(updatedLog.size()) == true
+								? LogEntry.reveal(ticketUsed, move.destination)
+								: LogEntry.hidden(ticketUsed));
 					}
 					//Update current player's tickets
 					Map<ScotlandYard.Ticket, Integer> updatedMap = new HashMap<>();
 					updatedMap.putAll(currentPlayer.tickets());
 					updatedMap.replace(ticketUsed, currentPlayer.tickets().get(ticketUsed) - 1);
-					ImmutableMap<ScotlandYard.Ticket, Integer> immutableUpdatedMap = ImmutableMap.copyOf(updatedMap);
-					return new Player(currentPiece, immutableUpdatedMap, move.destination);
+					return new Player(currentPiece, ImmutableMap.copyOf(updatedMap), move.destination);
 				}
-				/**implements:
-				 * 1. add move to log
-				 * 2. update tickets state
-				 * 3. update mr X's position
-				 */
 				@Override
 				public Player visit(DoubleMove move) {
-					updatedLog.add(setup.moves.get(updatedLog.size()) == true
+					updatedLog.add(setup.moves.get(updatedLog.size())
 							? LogEntry.reveal(move.ticket1, move.destination1)
 							: LogEntry.hidden(move.ticket1));
-					updatedLog.add(setup.moves.get(updatedLog.size()) == true
+					updatedLog.add(setup.moves.get(updatedLog.size())
 							? LogEntry.reveal(move.ticket2, move.destination2)
 							: LogEntry.hidden(move.ticket2));
 					//update ticket state
@@ -319,63 +299,45 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					updatedMap.replace(move.ticket1, mrX.tickets().get(move.ticket1) - 1);
 					updatedMap.replace(move.ticket2, mrX.tickets().get(move.ticket2) - 1);
 					updatedMap.replace(Ticket.DOUBLE, mrX.tickets().get(Ticket.DOUBLE) - 1);
-					ImmutableMap<ScotlandYard.Ticket, Integer> immutableUpdatedMap = ImmutableMap.copyOf(updatedMap);
-					//update mrX's position
-					return new Player(mrX.piece(), immutableUpdatedMap, move.destination2);
+					return new Player(mrX.piece(), ImmutableMap.copyOf(updatedMap), move.destination2);
 				}
 			});
-			//give ticket to mr
+			//give ticket to mrX if its detectives turn
 			Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
 			mrXTickets.putAll(mrX.tickets());
-			Player whoGiveToMrX = getPlayer(updatedNewPlayer.piece());
-			for(Ticket t : whoGiveToMrX.tickets().keySet()){
-				if(!updatedNewPlayer.tickets().get(t).equals(whoGiveToMrX.tickets().get(t))){
+			Player playerBeforeUpdate = getPlayer(updatedNewPlayer.piece());
+			for(Ticket t : playerBeforeUpdate.tickets().keySet()){          /* check what ticket has been used */
+				if(!updatedNewPlayer.tickets().get(t).equals(playerBeforeUpdate.tickets().get(t))){
 					mrXTickets.replace(t, mrX.tickets().get(t) + 1);
 				}
 			}
-			ImmutableMap<Ticket, Integer> immutableMrXTicket = ImmutableMap.copyOf(mrXTickets);
-			Player updatedMrX = new Player(mrX.piece(),immutableMrXTicket, mrX.location());
-
-			//swap to next players turn, if no player left, swap to mrX's turn
-			//if it's mrX turn, swap to detectives' turn by add all detectives into the remaining list
+			Player updatedMrX = new Player(mrX.piece(),ImmutableMap.copyOf(mrXTickets), mrX.location());
+			//update remaining
 			Set<Piece> updatedRemaining = new HashSet<>();
-			for(Piece p : remaining){
-				Boolean stillCanMove = false;
-				Player player = getPlayer(p);
-				if(!giveMoves(List.of(getPlayer(p))).isEmpty());{
-					updatedRemaining.add(p);
-				}
+			for(Piece p : remaining){          /*copy players who was in the remaining to the updatedRemaining*/
+				if(!giveMoves(List.of(getPlayer(p))).isEmpty()) updatedRemaining.add(p);
 			}
 			updatedRemaining.remove(move.commencedBy());
-			if(move.commencedBy().isMrX()) {
-				for(Player d : detectives){
-					if(!giveMoves(List.of(d)).isEmpty()) {
-						updatedRemaining.add(d.piece());
-					}
+			if(move.commencedBy().isMrX()) {         /*swap to detectives' turn*/
+				for(Player d : detectives){          /*add detectives who still can make move*/
+					if(!giveMoves(List.of(d)).isEmpty()) updatedRemaining.add(d.piece());
 				}
 			}
-			//if it's detectives' turn swap to next detectives, if it's empty, swap to mrX
-			else if (updatedRemaining.isEmpty()){
-				updatedRemaining.add(mrX.piece());
-			}
+			else if (updatedRemaining.isEmpty()) updatedRemaining.add(mrX.piece());          /*swap to mrX's turn*/
+			//update detectives
 			List<Player> updatedDetectives = new ArrayList<>();
 			updatedDetectives.addAll(detectives);
 			if(move.commencedBy().isMrX()) {
-				updatedMrX = updatedNewPlayer;
+				updatedMrX = updatedNewPlayer;          /*rewrite mrX's ticket status*/
 			}
-			for(Player d : detectives){
+			for(Player d : detectives){                 /*update detectives list*/
 				if(updatedNewPlayer.piece().equals(d.piece())){
 					updatedDetectives.add(updatedDetectives.indexOf(d), updatedNewPlayer);
 					updatedDetectives.remove(d);
 				}
 			}
-			// make things immutable
-			ImmutableSet<Piece> immutableUpdatedRemaining = ImmutableSet.copyOf(updatedRemaining);
-			ImmutableList<LogEntry> immutableUpdatedLog = ImmutableList.copyOf(updatedLog);
-			updatedLog.clear();
 			//update game state for the next move
-			System.out.println(move.commencedBy() + " made move " + move);
-			return new MyGameState(setup, immutableUpdatedRemaining, immutableUpdatedLog, updatedMrX, updatedDetectives);
+			return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(updatedLog), updatedMrX, updatedDetectives);
 		}
 	}
 }
