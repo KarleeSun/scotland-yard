@@ -210,42 +210,27 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 			return possibleMoves;
 		}
-
-		/**
-		 *
-		 * @return a Set of all possible double move a player can make
-		 */
 		private static Set<DoubleMove> makeDoubleMoves(GameSetup setup,
 													   List<Player> detectives,
 													   Player player,
 													   int source) {
 			if(!player.hasAtLeast(Ticket.DOUBLE,1)) return new HashSet<>();
-			List<SingleMove> firstAvailableMoves = new ArrayList<>();
 			Set<DoubleMove> doubleAvailableMoves = new HashSet<>();
 			//store all available first move by invoke makeSingleMove method
-			firstAvailableMoves.addAll(makeSingleMoves(setup,detectives,player, source));
+			List<SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(setup, detectives, player, source));
 			//iterate through all possible single moves and store its corresponding second move
 			for (SingleMove firstMove : firstAvailableMoves){
-				List<SingleMove> secondAvailableMoves = new ArrayList<>();          /* store second available moves*/
-				secondAvailableMoves.addAll(makeSingleMoves(setup,detectives,player, firstMove.destination));
-				/* iterate through all possible second move for a particular first move
-				 * and create new double move and store it
-				 */
+				/* store second available moves*/
+				List<SingleMove> secondAvailableMoves = new ArrayList<>(
+						makeSingleMoves(setup, detectives, player, firstMove.destination));
+				//iterate through all possible second move for a particular first move and create new double move and store it
 				Ticket ticketUsed = firstMove.ticket;
 				Integer ticketLeft = player.tickets().get(ticketUsed);
-				if(!secondAvailableMoves.isEmpty()) {
+				if (!secondAvailableMoves.isEmpty()) {
 					for (SingleMove secondMove : secondAvailableMoves) {
-						if (!(secondMove.ticket == ticketUsed) || ticketLeft>=2) {
-							doubleAvailableMoves.add(
-									new DoubleMove(
-											player.piece(),
-											firstMove.source(),
-											firstMove.ticket,
-											firstMove.destination,
-											secondMove.ticket,
-											secondMove.destination
-									)
-							);
+						if (!(secondMove.ticket == ticketUsed) || ticketLeft >= 2) {
+							doubleAvailableMoves.add( new DoubleMove(player.piece(), firstMove.source(),
+									firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination));
 						}
 					}
 				}
@@ -259,8 +244,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if(!remaining.contains(move.commencedBy())) return new MyGameState(setup,remaining,log,mrX,detectives);
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			if(!getAvailableMoves().contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
-			List<LogEntry> updatedLog = new ArrayList<>();
-			updatedLog.addAll(log);
+			List<LogEntry> updatedLog = new ArrayList<>(log);
 			//using visitor pattern to get information of the player who made the move
 			Player updatedNewPlayer = move.accept(new Visitor<Player>() {
 				@Override
@@ -275,13 +259,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 					//if it's mrX's move, add move to the log (determine whether its reveal or hidden)
 					if(currentPlayer.isMrX()){
-						updatedLog.add(setup.moves.get(updatedLog.size()) == true
+						updatedLog.add(setup.moves.get(updatedLog.size())
 								? LogEntry.reveal(ticketUsed, move.destination)
 								: LogEntry.hidden(ticketUsed));
 					}
 					//Update current player's tickets
-					Map<ScotlandYard.Ticket, Integer> updatedMap = new HashMap<>();
-					updatedMap.putAll(currentPlayer.tickets());
+					Map<Ticket, Integer> updatedMap = new HashMap<>(currentPlayer.tickets());
 					updatedMap.replace(ticketUsed, currentPlayer.tickets().get(ticketUsed) - 1);
 					return new Player(currentPiece, ImmutableMap.copyOf(updatedMap), move.destination);
 				}
@@ -294,8 +277,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 							? LogEntry.reveal(move.ticket2, move.destination2)
 							: LogEntry.hidden(move.ticket2));
 					//update ticket state
-					Map<ScotlandYard.Ticket, Integer> updatedMap = new HashMap<>();
-					updatedMap.putAll(mrX.tickets());
+					Map<Ticket, Integer> updatedMap = new HashMap<>(mrX.tickets());
 					updatedMap.replace(move.ticket1, mrX.tickets().get(move.ticket1) - 1);
 					updatedMap.replace(move.ticket2, mrX.tickets().get(move.ticket2) - 1);
 					updatedMap.replace(Ticket.DOUBLE, mrX.tickets().get(Ticket.DOUBLE) - 1);
@@ -303,8 +285,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			});
 			//give ticket to mrX if its detectives turn
-			Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
-			mrXTickets.putAll(mrX.tickets());
+			Map<Ticket, Integer> mrXTickets = new HashMap<>(mrX.tickets());
 			Player playerBeforeUpdate = getPlayer(updatedNewPlayer.piece());
 			for(Ticket t : playerBeforeUpdate.tickets().keySet()){          /* check what ticket has been used */
 				if(!updatedNewPlayer.tickets().get(t).equals(playerBeforeUpdate.tickets().get(t))){
@@ -325,8 +306,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 			else if (updatedRemaining.isEmpty()) updatedRemaining.add(mrX.piece());          /*swap to mrX's turn*/
 			//update detectives
-			List<Player> updatedDetectives = new ArrayList<>();
-			updatedDetectives.addAll(detectives);
+			List<Player> updatedDetectives = new ArrayList<>(detectives);
 			if(move.commencedBy().isMrX()) {
 				updatedMrX = updatedNewPlayer;          /*rewrite mrX's ticket status*/
 			}
