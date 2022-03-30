@@ -237,14 +237,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					for (SingleMove secondMove : secondAvailableMoves) {
 						if (!(secondMove.ticket == ticketUsed) || ticketLeft>=2) {
 							doubleAvailableMoves.add(
-									new DoubleMove(
-											player.piece(),
-											firstMove.source(),
-											firstMove.ticket,
-											firstMove.destination,
-											secondMove.ticket,
-											secondMove.destination
-									)
+                                new DoubleMove(
+                                        player.piece(),
+                                        firstMove.source(),
+                                        firstMove.ticket,
+                                        firstMove.destination,
+                                        secondMove.ticket,
+                                        secondMove.destination
+                                )
 							);
 						}
 					}
@@ -255,10 +255,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public GameState advance(Move move){
-			System.out.println(">advance being called.");
-//            System.out.println("mr X before move: " + mrX);
-			System.out.println("remaining: " + remaining + ", " + getPlayer(remaining.iterator().next()));
-			System.out.println("available moves: " + getAvailableMoves());
 			//error checking
 			if(!remaining.contains(move.commencedBy())) return new MyGameState(setup,remaining,log,mrX,detectives);
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
@@ -286,7 +282,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 					//if it's mrX's move, add move to the log (determine whether its reveal or hidden)
 					if(currentPlayer.isMrX()){
-						//System.out.println("updated log size: "+ updatedLog.size());
 						if(setup.moves.get(updatedLog.size()) == true){
 							updatedLog.add(LogEntry.reveal(ticketUsed, move.destination));
 						} else{
@@ -372,7 +367,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			ImmutableList<LogEntry> immutableUpdatedLog = ImmutableList.copyOf(updatedLog);
 			updatedLog.clear();
 			//update game state for the next move
-			System.out.println(move.commencedBy() + " made move " + move);
 			return new MyGameState(setup, immutableUpdatedRemaining, immutableUpdatedLog, updatedMrX, updatedDetectives);
 		}
 	}
