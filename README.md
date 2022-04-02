@@ -8,7 +8,8 @@
 3. reveal之后用黑卡和double move
 
 ## Algorithm
-A* + Alpha-Beta pruning
+0. A* + Alpha-Beta pruning
+1. Dijkstra heap algorithm + Alpha-Beta pruning
 
 ## Links
 0. 寻路算法
