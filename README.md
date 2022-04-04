@@ -14,3 +14,15 @@
 ## Links
 0. 寻路算法
 https://www.cnblogs.com/KillerAery/p/10283768.html#a-%E5%AF%BB%E8%B7%AF%E7%AE%97%E6%B3%95
+
+## Marks
+0. available moves和detectives的距离
+1. 这个点有几种交通工具 都是哪些
+2. detectives还剩什么票
+3. 和这个点相连的点有几个
+4. reveal
+
+## Conclusions
+0. 什么时候用黑卡
+1. 什么时候用double move
+2. 选哪个点最好
