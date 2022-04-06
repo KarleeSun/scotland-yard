@@ -14,6 +14,8 @@
 ## Links
 0. 寻路算法
 https://www.cnblogs.com/KillerAery/p/10283768.html#a-%E5%AF%BB%E8%B7%AF%E7%AE%97%E6%B3%95
+1. minheap+dijkstra
+https://www.geeksforgeeks.org/dijkstras-algorithm-for-adjacency-list-representation-greedy-algo-8/
 
 ## Marks
 0. available moves和detectives的距离
