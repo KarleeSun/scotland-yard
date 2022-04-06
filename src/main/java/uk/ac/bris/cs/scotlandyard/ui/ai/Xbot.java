@@ -12,7 +12,7 @@ import io.atlassian.fugue.Pair;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
 
-public class MyAi implements Ai {
+public class Xbot implements Ai {
 
     @Nonnull
     @Override
@@ -89,11 +89,21 @@ public class MyAi implements Ai {
         return 0;
     }
 
+    //交通工具和相邻点个数的评分
+    private static int transportationMark(@Nonnull Board board){
+        var moves = getMoves(board);
+        for(Move move: moves){
+
+        }
+        return 0;
+    }
+
     /*
     available moves和detectives的距离
     这个点有几种交通工具 都是哪些
     detectives还剩什么票
     和这个点相连的点有几个
+    用这种交通方式能到几个点（可能点个数）
     reveal
      */
     private static int giveMark(@Nonnull Board board){
