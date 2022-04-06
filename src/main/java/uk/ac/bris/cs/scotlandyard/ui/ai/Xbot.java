@@ -30,10 +30,10 @@ public class Xbot implements Ai {
         // returns a random move, replace with your own implementation
         var moves = getMoves(board);
         distanceMark(board);
-//		return moves.get(new Random().nextInt(moves.size()));
+        System.out.println("------");
+        return moves.get(new Random().nextInt(moves.size()));
 
-
-        return null;
+//        return null;
     }
 
     //get all available moves and return as a list
@@ -85,12 +85,14 @@ public class Xbot implements Ai {
             get detective locations from moves
          */
 
+        DijkstraMinHeap dp = new DijkstraMinHeap(mrXLoc,detectiveLocations,board);
+        System.out.println("dixx return result: " + dp.getDetectivesDistance());
 
         return 0;
     }
 
     //交通工具和相邻点个数的评分
-    private static int transportationMark(@Nonnull Board board){
+    private static int transportationScore(@Nonnull Board board){
         var moves = getMoves(board);
         for(Move move: moves){
 

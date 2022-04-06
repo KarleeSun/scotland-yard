@@ -20,10 +20,16 @@ public class DijkstraMinHeap {
     }
 
     public List<Integer> getDetectivesDistance() {
+        System.out.println("进到函数里面了");
+        //这就开始有问题
         int[] allDistance = dijkstra(board.getSetup(), mrXLocation);
+        System.out.println("1");
         List<Integer> destinations = detectivesLocation;
+        System.out.println("2");
         destinations.stream().map(x -> allDistance[x]).sorted();
+        System.out.println("3");
         System.out.println(destinations);
+        System.out.println("4");
         return destinations;
     }
 
@@ -61,8 +67,11 @@ public class DijkstraMinHeap {
         PriorityQueue<node> priorityQueue = new PriorityQueue<node>((v1, v2) -> v1.getDistance() - v2.getDistance());
         priorityQueue.add(new node(mrXLocation, 0));
 
+        System.out.println("1111111");
+
         while (priorityQueue.size() > 0) {
             node current = priorityQueue.poll();
+            System.out.println("pq.size: " + priorityQueue.size());
 
             for (int adjacent : setup.graph.adjacentNodes(current.getVertex())) {
                 Set<ScotlandYard.Transport> transports = setup.graph.edgeValueOrDefault(current.getVertex(), adjacent, ImmutableSet.of());
@@ -77,10 +86,13 @@ public class DijkstraMinHeap {
                 //update distance
                 if(distance[current.getVertex()] + adjacentNode.getDistance() < distance[adjacentNode.getVertex()]){
                     distance[adjacentNode.getVertex()] = adjacentNode.getDistance() + distance[current.getVertex()];
+                    if(priorityQueue.contains(adjacentNode)) priorityQueue.remove(adjacentNode);
                     priorityQueue.add(new node(adjacentNode.getVertex(), distance[adjacentNode.getVertex()]));
                 }
             }
         }
+
+        System.out.println("distance:" + distance);
         return distance;
     }
 
