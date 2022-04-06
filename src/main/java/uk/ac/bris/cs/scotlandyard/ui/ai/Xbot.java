@@ -36,15 +36,21 @@ public class Xbot implements Ai {
 //        return null;
     }
 
+    private Boolean IsThisMrXTurn(@Nonnull Board board){
+        if(board.getAvailableMoves().iterator().next().commencedBy().isMrX())
+            return true;
+        else return false;
+    }
+
     //get all available moves and return as a list
-    private static ImmutableList<Move> getMoves(@Nonnull Board board) {
+    private ImmutableList<Move> getMoves(@Nonnull Board board) {
         return board.getAvailableMoves().asList();
     }
 
 
     //decide which move will be farthest from the nearest detective(s)
     //and cast the distance into a mark
-    private static int distanceMark(@Nonnull Board board) {
+    private int distanceMark(@Nonnull Board board) {
 
         /* -------------------------------------------------------------------
             when is mrX's turn, get mrX's location from moves
@@ -94,8 +100,12 @@ public class Xbot implements Ai {
     //交通工具和相邻点个数的评分
     private static int transportationScore(@Nonnull Board board){
         var moves = getMoves(board);
+    private int transportationScore(@Nonnull Board board){
+        if(!IsThisMrXTurn(board))
+            return 0;
+        ImmutableList<Move> moves = getMoves(board);
         for(Move move: moves){
-
+            move.
         }
         return 0;
     }
@@ -108,7 +118,7 @@ public class Xbot implements Ai {
     用这种交通方式能到几个点（可能点个数）
     reveal
      */
-    private static int giveMark(@Nonnull Board board){
+    private int giveMark(@Nonnull Board board){
 
         return 0;
     }
