@@ -2,8 +2,10 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 import com.google.common.collect.ImmutableSet;
 import uk.ac.bris.cs.scotlandyard.model.Board;
 import uk.ac.bris.cs.scotlandyard.model.GameSetup;
+import uk.ac.bris.cs.scotlandyard.model.Piece;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import java.io.*;
 import java.util.*;
@@ -45,17 +47,27 @@ public class DijkstraMinHeap {
         public int getDistance() {return distance;}
     }
 
-    private int transportToDistance(ScotlandYard.Transport t) {
+    private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
+        Xbot xbot = new Xbot();
+        List<Piece.Detective> detectives = new ArrayList<>(xbot.getAllDetectives(board));
+        int[] ticketsCount = new int[]{0,0,0};
+        for (Piece.Detective detective: detectives){
+            ticketsCount[0] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.TAXI);
+            ticketsCount[1] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.BUS);
+            ticketsCount[2] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.UNDERGROUND);
+        }
+
         switch (t.toString()) {
-            case "Taxi":
-                return 2;
-            case "Buse":
-                return 3;
-            case "Underground":
-                return 8;
+            case "TAXI":
+                return 100/ticketsCount[0];
+            case "BUS":
+                return 100/ticketsCount[1];
+            case "UNDERGROUND":
+                return 100/ticketsCount[2];
         }
         return Integer.MAX_VALUE;
     }
+
 
     //Dijkstra to find the shortest distance between source and destination
     public int[] dijkstra(GameSetup setup, int source) {
@@ -78,7 +90,7 @@ public class DijkstraMinHeap {
                 //distance from current node to one of its adjacent node
                 int shortestRoute = Integer.MAX_VALUE;
                 for(ScotlandYard.Transport t : transports){
-                    int currentRoute = transportToDistance(t);
+                    int currentRoute = transportToDistance(board, t);
                     if(currentRoute < shortestRoute)
                         shortestRoute = currentRoute;
                 }
