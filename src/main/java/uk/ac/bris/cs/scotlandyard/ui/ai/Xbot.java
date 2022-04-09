@@ -27,9 +27,9 @@ public class Xbot implements Ai {
     @Override
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
         List l1 = new ArrayList<>();
-        l1.add(34);
-        l1.add(46);
-        Dijkstra d1 = new Dijkstra(3, l1, board);
+        l1.add(25);
+        l1.add(52);
+        Dijkstra d1 = new Dijkstra(67, l1, board);
         System.out.println("detective distances: " + d1.getDetectivesDistance());
         //new一个map 把Move和对应的分数放进去
         Map<Move,Integer> moveWithMark = new HashMap<>();

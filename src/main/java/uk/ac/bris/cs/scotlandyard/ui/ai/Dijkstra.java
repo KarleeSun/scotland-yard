@@ -63,6 +63,7 @@ public class Dijkstra {
 
     private List<List<Node>> getAllAdjacentNodes(Board board){
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
+        allAdjacentNodes.add(List.of(new Node(-1 ,-1)));
         ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph = board.getSetup().graph;
         //iterate through all vertex in the graph
         for(Integer vertex : graph.nodes()){
@@ -72,13 +73,10 @@ public class Dijkstra {
                 List<Integer> transportWeights = new ArrayList<>();
                 //iterate through all possible transportation from vertex to adjVertex and convert to weight
                 for(ScotlandYard.Transport t : graph.edgeValueOrDefault(vertex, adjVertex, ImmutableSet.of())){
-                    System.out.println("vertex: " + vertex + ", adj: " + adjVertex + ", transport: " + t);
                     transportWeights.add(transportToDistance(board, t));
-                    System.out.println(transportWeights.toString());
                 }
                 transportWeights.sort(Comparator.naturalOrder());
                 adjOfOneVertex.add(new Node(adjVertex, transportWeights.get(0)));       /*make new node for adj vertex*/
-                System.out.println("new node: " + adjVertex + ", " + transportWeights.get(0));
             }
             allAdjacentNodes.add(adjOfOneVertex);
         }
@@ -93,7 +91,7 @@ public class Dijkstra {
         for(int i = 0; i < V; i ++){
             sourceToVertexDistance[i] = 1000000;
         }
-        sourceToVertexDistance[source] = 0;       /*source to source itself has distance of 0*/
+        sourceToVertexDistance[source ] = 0;
         priorityQueue.add(new Node(source, 0));         /*add source to priority queue*/
         while(terminated.size() != V - 1){          /*terminated stores from 0*/
             Node w = priorityQueue.poll();          /*poll the first element in priority queue*/
@@ -110,12 +108,18 @@ public class Dijkstra {
     }
 
     private int[] processAdjacentVertices(Node w, int[] sourceToVertexDistance){
-        for(Node v : adjacentNodes.get(w.vertex)){      /*iterate through all adjacent nodes of 1 vertex*/
-            int alternativeDistance = sourceToVertexDistance[w.vertex] + v.weight;        /*(source -> w) + (w -> v)*/
-            if(alternativeDistance < sourceToVertexDistance[v.vertex]) {
-                sourceToVertexDistance[v.vertex] = alternativeDistance;       /*update distance if nearer*/
+        System.out.println("w: " + w);
+        System.out.println("adjacent nodes: " + adjacentNodes.get(w.vertex).toString());
+        for(Node v : adjacentNodes.get(w.vertex)) {      /*iterate through all adjacent nodes of 1 vertex*/
+            System.out.println("v: " + v);
+            if (!terminated.contains(v.vertex)) {
+                int alternativeDistance = sourceToVertexDistance[w.vertex] + v.weight;        /*(source -> w) + (w -> v)*/
+                if (alternativeDistance < sourceToVertexDistance[v.vertex]) {
+                    sourceToVertexDistance[v.vertex] = alternativeDistance;       /*update distance if nearer*/
+                    System.out.println("update distance: " + alternativeDistance);
+                }
+                priorityQueue.add(new Node(v.vertex, alternativeDistance));         /*add new node to priority queue*/
             }
-            priorityQueue.add(new Node(v.vertex, alternativeDistance));         /*add new node to priority queue*/
         }
         return sourceToVertexDistance;
     }
@@ -136,6 +140,10 @@ public class Dijkstra {
             if(n1.weight < n2.weight) return -1;
             if(n2.weight < n1.weight) return 1;
             return 0;
+        }
+        //print
+        public String toString(){
+            return "[vertex: " + vertex + ", weight: " + weight + "]";
         }
     }
 }
