@@ -27,4 +27,4 @@ https://www.geeksforgeeks.org/dijkstras-algorithm-for-adjacency-list-representat
 ## Conclusions
 0. 什么时候用黑卡
 1. 什么时候用double move
-2. 选哪个点最好
+2. 选哪个点和哪种交通方式
