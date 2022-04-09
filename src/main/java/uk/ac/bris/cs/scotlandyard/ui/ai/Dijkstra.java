@@ -10,12 +10,12 @@ import javax.annotation.concurrent.Immutable;
 import java.io.*;
 import java.util.*;
 
-public class DijkstraMinHeap {
+public class Dijkstra {
     private int mrXLocation;
     private List<Integer> detectivesLocation;
     private Board board;
 
-    public DijkstraMinHeap(int mrXLocation, List<Integer> detectivesLocation, Board board) {
+    public Dijkstra(int mrXLocation, List<Integer> detectivesLocation, Board board) {
         this.mrXLocation = mrXLocation;
         this.detectivesLocation = detectivesLocation;
         this.board = board;
