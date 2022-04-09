@@ -23,10 +23,13 @@ public class Xbot implements Ai {
 
     @Nonnull
     @Override
-    public Move pickMove(
-            @Nonnull Board board,
-            Pair<Long, TimeUnit> timeoutPair) {
-
+    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
+        System.out.println("1");
+        List<Integer> a1 = new ArrayList();
+        a1.add(24);
+        a1.add(65);
+        Dijkstra d = new Dijkstra(67, a1, board);
+        System.out.println(d.getDetectivesDistance());
         // returns a random move, replace with your own implementation
         var moves = getMoves(board);
         distanceMark(board);
@@ -100,9 +103,9 @@ public class Xbot implements Ai {
         if(!IsThisMrXTurn(board))
             return 0;
         ImmutableList<Move> moves = getMoves(board);
-        for(Move move: moves){
-            move.
-        }
+//        for(Move move: moves){
+//            move.
+//        }
         return 0;
     }
 
