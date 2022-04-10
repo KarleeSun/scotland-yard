@@ -52,12 +52,19 @@ public class Xbot implements Ai {
         return pickedMove;
     }
 
+    //给一个位置（source）返回它所有可能的move
+    //其实可以更新mrX和detectives的位置
+    //对于每一个位置 找他的adjacencyNodes 然后判断它有没有票
+    //在普通轮double票就特别贵 在detectives离得特别近时候、还有reveal之后，double票就变得便宜
+    private List<Move> getDetectiveMoves(@Nonnull Board board, Piece detective, int source){
 
-    private Boolean IsThisMrXTurn(@Nonnull Board board){
-        if(board.getAvailableMoves().iterator().next().commencedBy().isMrX())
-            return true;
-        else return false;
     }
+
+//    private Boolean IsThisMrXTurn(@Nonnull Board board){
+//        if(board.getAvailableMoves().iterator().next().commencedBy().isMrX())
+//            return true;
+//        else return false;
+//    }
 
     //get all available moves and return as a list
     private ImmutableList<Move> getMoves(@Nonnull Board board) {
