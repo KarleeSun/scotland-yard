@@ -27,7 +27,17 @@ public class Dijkstra {
         source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
         destinations = detectivesLocation;
         distance = dijkstraShortestDistance(source.vertex);
+    }
 
+    public Dijkstra(int mrXLocation, int detectiveLocation, Board board) {
+        this.board = board;
+        V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
+        terminated = new HashSet<Integer>();
+        priorityQueue = new PriorityQueue<Node>(V, new Node());         /*order according to Node weight*/
+        adjacentNodes = getAllAdjacentNodes(board);                     /*graph vertex start from 1, fill 0 with empty list*/
+        source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
+        destinations = List.of(detectiveLocation);
+        distance = dijkstraShortestDistance(source.vertex);
     }
 
     //return: a list of weights from mr X to individual detectives, ordered from lowest to largest
@@ -38,6 +48,10 @@ public class Dijkstra {
         }
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
+    }
+
+    public int getDistance(){
+        return distance[destinations.get(0)];
     }
 
     //convert transportation to distance according the number of according ticket left from detectives
@@ -80,7 +94,6 @@ public class Dijkstra {
         return allAdjacentNodes;
     }
 
-
     //Dijkstra to find the shortest distance between source and destination
     private int[] dijkstraShortestDistance(int source) {
         int[] sourceToVertexDistance = new int[V];
@@ -94,10 +107,6 @@ public class Dijkstra {
             if (terminated.contains(w.vertex)) continue;         /*skip if already terminated shorter distance*/
             terminated.add(w.vertex);
             processAdjacentVertices(w, sourceToVertexDistance);         /*process adjacent vertices*/
-            System.out.println("terminated: " + terminated);
-            System.out.println(terminated.size());
-            System.out.println(Arrays.toString(sourceToVertexDistance));
-            System.out.println(sourceToVertexDistance.length + ", " + V);
         }
         return sourceToVertexDistance;
     }
@@ -137,4 +146,3 @@ public class Dijkstra {
         }
     }
 }
-
