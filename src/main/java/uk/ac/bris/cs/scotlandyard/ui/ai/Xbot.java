@@ -149,6 +149,8 @@ public class Xbot implements Ai {
                 for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
                     if (player.hasAtLeast(t.requiredTicket(), 1)) {
                         possibleMoves.add(new Move.SingleMove(player.piece(), source, t.requiredTicket(), d));
+//                        if(player.isMrX()) mrXLoc = d;
+//                        if(player.isDetective()) detectivesLoc
                     }
                 }
             }
