@@ -25,12 +25,15 @@ public class Xbot implements Ai {
 
     @Nonnull
     @Override
-    public Move pickMove(
-            @Nonnull Board board,
-            Pair<Long, TimeUnit> timeoutPair) {
+    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
 
         //测试用，记得删掉--------------------------------------------------------------------
         System.out.println("all available moves: "+ board.getAvailableMoves());
+        List dL = new ArrayList<>();
+        dL.add(140);
+        dL.add(5);
+        Dijkstra d = new Dijkstra(42, dL, board);
+        System.out.println(d.getDetectivesDistance());
 
         //---------------------------------------------------------------------------------
 
