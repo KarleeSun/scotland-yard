@@ -11,10 +11,14 @@ public class TreeNode {
     private int beta;
     private TreeNode parent;
     private List<TreeNode> children;
-
+    private static int MIN = -100000;
+    private static int MAX = 100000;
+    
     public TreeNode(Move move, int score){
         this.move = move;
         this.score = score;
+        this.alpha = MIN;
+        this.beta = MAX;
     }
 
     public void addChild(TreeNode child){
