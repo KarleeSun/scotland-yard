@@ -13,7 +13,7 @@ public class TreeNode {
     private List<TreeNode> children;
     private static int MIN = -100000;
     private static int MAX = 100000;
-    
+
     public TreeNode(Move move, int score){
         this.move = move;
         this.score = score;
@@ -33,6 +33,10 @@ public class TreeNode {
 
     public void setParent(TreeNode parent) {this.parent = parent;}
 
+    public void remove(TreeNode node){
+        node.parent.children.remove(node);
+    }
+    
     public int getScore() {return score;}
     public Move getMove() {return move;}
 
