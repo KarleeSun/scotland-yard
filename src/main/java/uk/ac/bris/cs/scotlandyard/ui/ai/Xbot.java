@@ -9,31 +9,43 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.atlassian.fugue.Pair;
 
 import uk.ac.bris.cs.scotlandyard.model.*;
 
+/*
+    是要给每个选择一个分数
+    那就直接重写getAvailableMoves
+    然后对现在的局面有一个评分标准
+    之后minimax就是看分的
+ */
 
 public class Xbot implements Ai {
+    //成员变量及其初始化
+    private static Board board; //这样在这个class就能直接用，不用每个函数都再传入一遍board
+    private Piece.MrX MRX = Piece.MrX.MRX; //mrX的piece
+    private List<Piece.Detective> detectives = getAllDetectives(board); //所有detective的pieces，存在一个list里
+    private int mrXLoc = getCurrentMrXLoc(board) ; //记录mrX的位置和预测位置
+    private List<Integer> detectivesLoc = getCurrentDetectivesLoc(board); //记录detectives的位置 按顺序存在一个list里
+    private Map<ScotlandYard.Ticket, Integer> mrXTickets = getCurrentMrXTickets(); //存的是mrX的票
+    private Map<ScotlandYard.Ticket, Integer> detectivesTickets = getCurrentDetectiveTickets(); //存的是detective的票
+    private ScotlandYard.Ticket usedTicket; //用了什么票也记一下
 
-    @Nonnull
-    @Override
+    //name of this AI
+    @Nonnull @Override
     public String name() {
         return "Xbot";
     }
 
-
-    @Nonnull
-    @Override
-    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
+    //pick the best move for mrX
+    @Nonnull @Override
+    public Move pickMove(
+            @Nonnull Board board,
+            Pair<Long, TimeUnit> timeoutPair) {
 
         //测试用，记得删掉--------------------------------------------------------------------
         System.out.println("all available moves: "+ board.getAvailableMoves());
-        List dL = new ArrayList<>();
-        dL.add(140);
-        dL.add(5);
-        Dijkstra d = new Dijkstra(42, dL, board);
-        System.out.println(d.getDetectivesDistance());
 
         //---------------------------------------------------------------------------------
 
@@ -55,16 +67,37 @@ public class Xbot implements Ai {
         return pickedMove;
     }
 
-
-    private Boolean IsThisMrXTurn(@Nonnull Board board){
-        if(board.getAvailableMoves().iterator().next().commencedBy().isMrX())
-            return true;
-        else return false;
+    //get mrX current location
+    private int getCurrentMrXLoc(@Nonnull Board board){
+        return board.getAvailableMoves().stream().iterator().next().source();
     }
 
-    //get all available moves and return as a list
-    private ImmutableList<Move> getMoves(@Nonnull Board board) {
-        return board.getAvailableMoves().asList();
+    //get detectives location and return as a list
+    private List<Integer> getCurrentDetectivesLoc(@Nonnull Board board){
+
+        //get pieces of detectives
+        List<Piece.Detective> detectives = getAllDetectives(board);
+        //get detectives locations and store them in a list
+        List<Integer> detectiveLocations = new ArrayList<>();
+        for (Piece.Detective detectivePiece : detectives) {
+            detectiveLocations.add(board.getDetectiveLocation(detectivePiece).get());
+        }
+        return detectiveLocations;
+    }
+
+    private Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(){
+        Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
+        for(ScotlandYard.Ticket t: ScotlandYard.Ticket.values())
+            mrXTickets.put(t,board.getPlayerTickets(MRX).get().getCount(t));
+        return mrXTickets;
+    }
+
+    private Map<ScotlandYard.Ticket, Integer> getCurrentDetectiveTickets(){
+        for(Piece.Detective d: detectives){
+            for(ScotlandYard.Ticket t: ScotlandYard.Ticket.values())
+                mrXTickets.put(t,board.getPlayerTickets(d).get().getCount(t));
+        }
+        return mrXTickets;
     }
 
     //得到所有存着detectives的piece
@@ -80,50 +113,125 @@ public class Xbot implements Ai {
         return detectives;
     }
 
-    //get mrX current location
-    private int getMrXLoc(@Nonnull Board board){
-        return board.getAvailableMoves().stream().iterator().next().source();
-    }
+    //------------------------------------------------------------------------------------------------------------------
+//    private ImmutableSet<Move> giveMoves(List<Player> players){
+//        Set<Move> moves = new HashSet<>();
+//        for(Player p : players){
+//            moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
+//            if(log.size()+2 <= setup.moves.size()) {          /* Check where enough round for double move*/
+//                moves.addAll(makeDoubleMoves(setup, detectives, p, p.location()));
+//            }
+//        }
+//        return ImmutableSet.copyOf(moves);
+//    }
 
-    //decide which move will be farthest from the nearest detective(s)
-    //and cast the distance into a mark
-    private int distanceMark(@Nonnull Board board, Move move) {
-        /* -------------------------------------------------------------------
-            when is mrX's turn, get mrX's location from moves
-            get detective locations from board
-         */
 
-        int distanceMark = 0;
-        //get pieces of detectives
-        List<Piece.Detective> detectives = getAllDetectives(board);
-        //get detectives locations and store them in a list
-        List<Integer> detectiveLocations = new ArrayList<>();
-        for (Piece.Detective detectivePiece : detectives) {
-            detectiveLocations.add(board.getDetectiveLocation(detectivePiece).get());
-        }
-
-        if((Boolean) getMoveInformation(move).get("isSingleMove")){ //singlemove的情况
-            Dijkstra dijkstra = new Dijkstra((int)getMoveInformation(move).get("destination"),detectiveLocations,board);
-            List<Integer> distance = dijkstra.getDetectivesDistance();
-            for(Integer d: distance){
-                distanceMark *= 10;
-                distanceMark += d;
+    private Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives,
+                                                        Player player, int source) {
+        Set<Move.SingleMove> possibleMoves = Sets.newHashSet();
+        Set<Integer> destination = setup.graph.adjacentNodes(source);
+        for (int d : destination) {
+            boolean notOccupied = true;          /* node not occupied by detectives*/
+            for (Player detective : detectives) {
+                if (detective.location() == d) {
+                    notOccupied = false;
+                    break;
+                }
             }
-            distanceMark /= (Math.pow(10,distance.size()));
-            return distanceMark;
+            //iterate through set containing all possible transportation from source to destination
+            if (notOccupied) {
+                if (player.hasAtLeast(ScotlandYard.Ticket.SECRET, 1)){          /* with SECRET MOVES */
+                    possibleMoves.add(new Move.SingleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, d));
+                }
+                for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
+                    if (player.hasAtLeast(t.requiredTicket(), 1)) {
+                        possibleMoves.add(new Move.SingleMove(player.piece(), source, t.requiredTicket(), d));
+                    }
+                }
+            }
         }
-        else{ //doublemove的情况
-
-        }
-
-        /* ----------------------------------------------------------
-            if it's detectives' turn, get mrX location from log
-            get detective locations from moves
-         */
-
-
-        return 0;
+        return possibleMoves;
     }
+    private Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup,
+                                                        List<Player> detectives,
+                                                        Player player,
+                                                        int source) {
+        if(!player.hasAtLeast(ScotlandYard.Ticket.DOUBLE,1)) return new HashSet<>();
+        Set<Move.DoubleMove> doubleAvailableMoves = new HashSet<>();
+        //store all available first move by invoke makeSingleMove method
+        List<Move.SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(setup, detectives, player, source));
+        //iterate through all possible single moves and store its corresponding second move
+        for (Move.SingleMove firstMove : firstAvailableMoves){
+            /* store second available moves*/
+            List<Move.SingleMove> secondAvailableMoves = new ArrayList<>(
+                    makeSingleMoves(setup, detectives, player, firstMove.destination));
+            //iterate through all possible second move for a particular first move and create new double move and store it
+            ScotlandYard.Ticket ticketUsed = firstMove.ticket;
+            Integer ticketLeft = player.tickets().get(ticketUsed);
+            if (!secondAvailableMoves.isEmpty()) {
+                for (Move.SingleMove secondMove : secondAvailableMoves) {
+                    if (!(secondMove.ticket == ticketUsed) || ticketLeft >= 2) {
+                        doubleAvailableMoves.add( new Move.DoubleMove(player.piece(), firstMove.source(),
+                                firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination));
+                    }
+                }
+            }
+        }
+        return doubleAvailableMoves;
+    }
+    //------------------------------------------------------------------------------------------------------------------
+
+
+    //给一个位置（source）返回它所有可能的move
+    //其实可以更新mrX和detectives的位置
+    //对于每一个位置 找他的adjacencyNodes 然后判断它有没有票
+    //在普通轮double票就特别贵 在detectives离得特别近时候、还有reveal之后，double票就变得便宜
+    private List<Integer> predictDetectiveMoves(@Nonnull Board board,int mrXLoc, List<Integer> detectivesLoc){
+        List<Integer> updatedDetectivesLoc = new ArrayList<>();
+        //然后每个detective都走到了距离-1的地方
+        List<Integer> detectiveLoc = new ArrayList<>();
+        for(Integer dLoc: detectivesLoc){
+            Dijkstra dj = new Dijkstra(mrXLoc, dLoc, board);
+            int distance = dj.getDistance();
+            for (int d: board.getSetup().graph.adjacentNodes(dLoc)){
+                Dijkstra dk = new Dijkstra(mrXLoc, d, board);
+                if(!detectivesLoc.contains(d) && dk.getDistance() == distance-1){
+                    //这写的大概有一点问题
+                    for(ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc,d,ImmutableSet.of())){
+                        if(detectivesTickets.get(t.requiredTicket()) >= 1){
+                            detectivesTickets.remove(t.requiredTicket());
+                            mrXTickets.put(t.requiredTicket(), mrXTickets.get(t.requiredTicket())+1);
+                            continue;
+                        }
+                    }
+                    updatedDetectivesLoc.add(d);
+                    continue;
+                }
+            }
+        }
+        return updatedDetectivesLoc;
+    }
+
+
+
+    /*
+    o available moves和detectives的距离
+    o 这个点有几种交通工具 都是哪些
+    o 和这个点相连的点有几个
+    o detectives还剩什么票
+    o 用这种交通方式能到几个点（可能点个数）
+    reveal
+     */
+    /*
+        多数情况可能doublemove都比singlemove要好，但是double卡是有限的
+        所以在离得远的时候就不用double卡 离得近时候（近到一定程度，再用double）
+
+        给的都应该是destination，即可能到的位置 而不是mrX现在的位置
+        visitor pattern的作用是知道用的是singlemove还是doublemove 这样就可以get所需要的位置
+
+        先只处理single，即：在普通的时候只用singleMove，只有在特殊的时候才用doublemove
+
+     */
 
     //这个函数用来得到我想得到的全部信息
     private Map<String, Object> getMoveInformation(Move move){
@@ -154,69 +262,12 @@ public class Xbot implements Ai {
         return null;
     }
 
-
-
-    //到这个点的交通方式数量和相邻点个数的评分
-    private int transportationScore (@Nonnull Board board, Move move){
-        if((Boolean) getMoveInformation(move).get("isSingleMove")){ //singlemove的情况
-            int destination = (int) getMoveInformation(move).get("destination");
-            int adjacentNodeNum = board.getSetup().graph.adjacentNodes(destination).size();
-            int transportTypeNum = board.getSetup().graph.edgeValueOrDefault(move.source(),destination,ImmutableSet.of()).size();
-            return 9*adjacentNodeNum + transportTypeNum; //这个权重先这么设置
-        }
-        else{ //doublemove的情况
-
-        }
-        return 0;
-    }
-
-    //用这种交通方式能到几个点
-    private int guessPossibilityScore(@Nonnull Board board, GameSetup setup, Move move){
-        int possibleNode = 0;
-        if((Boolean) getMoveInformation(move).get("isSingleMove")) { //singlemove的情况
-            ScotlandYard.Ticket ticket = (ScotlandYard.Ticket) getMoveInformation(move).get("ticket");
-            Set<Integer> allAdjacentNodes = board.getSetup().graph.adjacentNodes(getMrXLoc(board));
-            if(ticket == ScotlandYard.Ticket.SECRET) possibleNode = allAdjacentNodes.size();
-            else {
-                //这个之后能改了改改
-                for(Integer node: allAdjacentNodes){
-                    for(ScotlandYard.Transport t: board.getSetup().graph.edgeValueOrDefault(move.source(),node,ImmutableSet.of())){
-                        if (t.requiredTicket() == ticket) possibleNode++;
-                    }
-                }
-            }
-        }
-        else { //doublemove的情况
-
-        }
-        return possibleNode;
-    }
-
-
-    /*
-    o available moves和detectives的距离
-    o 这个点有几种交通工具 都是哪些
-    o 和这个点相连的点有几个
-    o detectives还剩什么票
-    o 用这种交通方式能到几个点（可能点个数）
-    reveal
-     */
-    /*
-        多数情况可能doublemove都比singlemove要好，但是double卡是有限的
-        所以在离得远的时候就不用double卡 离得近时候（近到一定程度，再用double）
-
-        给的都应该是destination，即可能到的位置 而不是mrX现在的位置
-        visitor pattern的作用是知道用的是singlemove还是doublemove 这样就可以get所需要的位置
-
-        先只处理single，即：在普通的时候只用singleMove，只有在特殊的时候才用doublemove
-
-     */
-
     private int giveMark(@Nonnull Board board, Move move){
         //当reveal前一轮和后一轮时候改变权重
         //reveal前一轮 能到的点评分权重增加
         //reveal后一轮是交通方式 或者用secret卡
         //判断离reveal的轮数
+        //对于单次的move 其实是同一套评分系统 detectives想办法让mrX分更低
 
 
         return 0;

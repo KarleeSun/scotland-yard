@@ -29,6 +29,17 @@ public class Dijkstra {
         distance = dijkstraShortestDistance(source.vertex);
     }
 
+    public Dijkstra(int mrXLocation, int detectiveLocation, Board board) {
+        this.board = board;
+        V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
+        terminated = new HashSet<Integer>();
+        priorityQueue = new PriorityQueue<Node>(V, new Node());         /*order according to Node weight*/
+        adjacentNodes = getAllAdjacentNodes(board);                     /*graph vertex start from 1, fill 0 with empty list*/
+        source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
+        destinations = List.of(detectiveLocation);
+        distance = dijkstraShortestDistance(source.vertex);
+    }
+
     //return: a list of weights from mr X to individual detectives, ordered from lowest to largest
     public List<Integer> getDetectivesDistance() {
         List<Integer> detectiveDistances = new ArrayList();
@@ -37,6 +48,10 @@ public class Dijkstra {
         }
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
+    }
+
+    public int getDistance(){
+        return distance[destinations.get(0)];
     }
 
     //convert transportation to distance according the number of according ticket left from detectives
@@ -50,17 +65,16 @@ public class Dijkstra {
             ticketsCount[2] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.UNDERGROUND);
         }
         return switch (t.toString()) {
-//            case "TAXI" -> 100 / ticketsCount[0];
-//            case "BUS" -> 100 / ticketsCount[1];
-//            case "UNDERGROUND" -> 100 / ticketsCount[2];
-//            default -> 1000000;
-            default -> 1;
+            case "TAXI" -> 100 / ticketsCount[0];
+            case "BUS" -> 100 / ticketsCount[1];
+            case "UNDERGROUND" -> 100 / ticketsCount[2];
+            default -> 1000000;
         };
     }
-    //return an adjacency list contains all adjacent nodes of all nodes in the graph
+
     private List<List<Node>> getAllAdjacentNodes(Board board) {
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
-        allAdjacentNodes.add(List.of(new Node(-1, -1)));        /*list starts from 0*/
+        allAdjacentNodes.add(List.of(new Node(-1, -1)));
         ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph = board.getSetup().graph;
         //iterate through all vertex in the graph
         for (Integer vertex : graph.nodes()) {
@@ -70,15 +84,15 @@ public class Dijkstra {
                 List<Integer> transportWeights = new ArrayList<>();
                 //iterate through all possible transportation from vertex to adjVertex and convert to weight
                 for (ScotlandYard.Transport t : graph.edgeValueOrDefault(vertex, adjVertex, ImmutableSet.of())) {
-                    transportWeights.add(transportToDistance(board, t));        /*choose the lowest weight transport*/
+                    transportWeights.add(transportToDistance(board, t));
                 }
+                transportWeights.sort(Comparator.naturalOrder());
                 adjOfOneVertex.add(new Node(adjVertex, transportWeights.get(0)));       /*make new node for adj vertex*/
             }
             allAdjacentNodes.add(adjOfOneVertex);
         }
         return allAdjacentNodes;
     }
-
 
     //Dijkstra to find the shortest distance between source and destination
     private int[] dijkstraShortestDistance(int source) {
@@ -89,6 +103,7 @@ public class Dijkstra {
         priorityQueue.add(new Node(source, 0));         /*add source to priority queue*/
         while (terminated.size() != V - 1) {          /*terminated stores from 0*/
             Node w = priorityQueue.poll();          /*poll the first element in priority queue*/
+            System.out.println("PQ:" + priorityQueue.size());
             if (terminated.contains(w.vertex)) continue;         /*skip if already terminated shorter distance*/
             terminated.add(w.vertex);
             processAdjacentVertices(w, sourceToVertexDistance);         /*process adjacent vertices*/
@@ -97,11 +112,15 @@ public class Dijkstra {
     }
 
     private void processAdjacentVertices(Node w, int[] sourceToVertexDistance) {
+        System.out.println("w: " + w);
+        System.out.println("adjacent nodes: " + adjacentNodes.get(w.vertex).toString());
         for (Node v : adjacentNodes.get(w.vertex)) {      /*iterate through all adjacent nodes of 1 vertex*/
+            System.out.println("v: " + v);
             if (!terminated.contains(v.vertex)) {
                 int alternativeDistance = sourceToVertexDistance[w.vertex] + v.weight;        /*(source -> w) + (w -> v)*/
                 if (alternativeDistance < sourceToVertexDistance[v.vertex]) {
                     sourceToVertexDistance[v.vertex] = alternativeDistance;       /*update distance if nearer*/
+                    System.out.println("update distance: " + alternativeDistance);
                 }
                 priorityQueue.add(new Node(v.vertex, alternativeDistance));         /*add new node to priority queue*/
             }
@@ -113,13 +132,17 @@ public class Dijkstra {
         public int vertex;
         public int weight;
 
-        public Node() {}
+        public Node() {
+        }
+
         public Node(int vertex, int weight) {
             this.vertex = vertex;
             this.weight = weight;
         }
+
         @Override
-        public int compare(Node n1, Node n2) {return Integer.compare(n1.weight, n2.weight);}
+        public int compare(Node n1, Node n2) {          /*min first*/
+            return Integer.compare(n1.weight, n2.weight);
+        }
     }
 }
-
