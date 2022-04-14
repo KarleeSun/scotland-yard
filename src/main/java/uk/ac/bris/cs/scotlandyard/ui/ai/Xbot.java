@@ -23,6 +23,11 @@ import uk.ac.bris.cs.scotlandyard.model.*;
     之后minimax就是看分的
  */
 
+/*
+    这个事情是这样的，其实不是给它每一轮的分数，是给一个几轮之后的分数（几轮就是depth）
+    然后再倒着找 看导致这个最优结果的是哪一个move
+ */
+
 public class Xbot implements Ai {
     //成员变量及其初始化
 //    private static Board board = b; //这样在这个class就能直接用，不用每个函数都再传入一遍board

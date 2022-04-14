@@ -108,5 +108,4 @@ public class Score {
         System.out.println("guessPossibilityScore: "+ possibleNode);
         return possibleNode;
     }
-
 }
