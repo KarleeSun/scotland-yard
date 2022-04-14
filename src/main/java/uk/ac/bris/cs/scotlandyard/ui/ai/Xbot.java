@@ -17,6 +17,8 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 /*
     是要给每个选择一个分数
     那就直接重写getAvailableMoves
+    用的时候判断 想走的move是不是在getAvailableMoves获得的moves里面
+    如果在的话就选择那个move
     然后对现在的局面有一个评分标准
     之后minimax就是看分的
  */
@@ -49,22 +51,27 @@ public class Xbot implements Ai {
 
         //---------------------------------------------------------------------------------
 
+        Minimax minimax = new Minimax();
+
+
+
         //new一个map 把Move和对应的分数放进去
-        Map<Move,Integer> moveWithMark = new HashMap<>();
-        for(Move move: board.getAvailableMoves().asList()){
-            moveWithMark.put(move,giveMark(board,move));
-        }
-//        System.out.println("moveWithMark: "+ moveWithMark);
-        //比较哪一个分最高，选分最高的那个move
-        List<Map.Entry<Move,Integer>> listMark = new ArrayList<>(moveWithMark.entrySet());
-        Collections.sort(listMark, (o1,o2) -> (o2.getValue() - o1.getValue())); //降序排列
-        Move pickedMove = listMark.get(0).getKey();
+//        Map<Move,Integer> moveWithMark = new HashMap<>();
+//        for(Move move: board.getAvailableMoves().asList()){
+//            moveWithMark.put(move,giveMark(board,move));
+//        }
+////        System.out.println("moveWithMark: "+ moveWithMark);
+//        //比较哪一个分最高，选分最高的那个move
+//        List<Map.Entry<Move,Integer>> listMark = new ArrayList<>(moveWithMark.entrySet());
+//        Collections.sort(listMark, (o1,o2) -> (o2.getValue() - o1.getValue())); //降序排列
+//        Move pickedMove = listMark.get(0).getKey();
 
 //        //测试用
 //        System.out.println("listMark: " + listMark);
 //        System.out.println("pickedMove: " + pickedMove);
 
-        return pickedMove;
+//        return pickedMove;
+        return null;
     }
 
     //get mrX current location
@@ -114,17 +121,6 @@ public class Xbot implements Ai {
     }
 
     //------------------------------------------------------------------------------------------------------------------
-//    private ImmutableSet<Move> giveMoves(List<Player> players){
-//        Set<Move> moves = new HashSet<>();
-//        for(Player p : players){
-//            moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
-//            if(log.size()+2 <= setup.moves.size()) {          /* Check where enough round for double move*/
-//                moves.addAll(makeDoubleMoves(setup, detectives, p, p.location()));
-//            }
-//        }
-//        return ImmutableSet.copyOf(moves);
-//    }
-
 
     private Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives,
                                                         Player player, int source) {
@@ -213,15 +209,6 @@ public class Xbot implements Ai {
     }
 
 
-
-    /*
-    o available moves和detectives的距离
-    o 这个点有几种交通工具 都是哪些
-    o 和这个点相连的点有几个
-    o detectives还剩什么票
-    o 用这种交通方式能到几个点（可能点个数）
-    reveal
-     */
     /*
         多数情况可能doublemove都比singlemove要好，但是double卡是有限的
         所以在离得远的时候就不用double卡 离得近时候（近到一定程度，再用double）
@@ -262,15 +249,13 @@ public class Xbot implements Ai {
         return null;
     }
 
-    private int giveMark(@Nonnull Board board, Move move){
-        //当reveal前一轮和后一轮时候改变权重
-        //reveal前一轮 能到的点评分权重增加
-        //reveal后一轮是交通方式 或者用secret卡
-        //判断离reveal的轮数
-        //对于单次的move 其实是同一套评分系统 detectives想办法让mrX分更低
-
-
-        return 0;
+    //把mrX现在所有的available moves和其对应分数存入一个map
+    private Map<Move,Integer> movesWithScore(@Nonnull Board board, Move move){
+        Map<Move,Integer> moveWithScore = new HashMap<>();
+        ImmutableSet<Move> moves = board.getAvailableMoves();
+        for(Move availableMove: moves){
+            moveWithScore.put(availableMove, 0);
+        }
+        return moveWithScore;
     }
-
 }

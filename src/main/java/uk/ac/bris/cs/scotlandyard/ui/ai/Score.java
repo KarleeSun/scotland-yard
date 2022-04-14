@@ -20,7 +20,7 @@ import java.util.Set;
  */
 
 public class Score {
-    private int source;
+    private int source; //还不对，检查
     private int mrXLoc;
     private ScotlandYard.Ticket usedTicket;
     private List<Integer> detectivesLoc;
@@ -61,6 +61,7 @@ public class Score {
     }
 
     //score about the distance
+    //就是这个函数 source和location很混乱 写完xbot再回来看这个
     private int distanceScore(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
         //用一下Dijkstra
         Dijkstra dk = new Dijkstra(mrXLoc,detectivesLoc,board);
