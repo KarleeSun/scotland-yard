@@ -22,16 +22,21 @@ import java.util.Set;
 public class Score {
     private int source; //还不对，检查
     private int mrXLoc;
-    private ScotlandYard.Ticket usedTicket;
     private List<Integer> detectivesLoc;
+    private ScotlandYard.Ticket usedTicket;
+    private Boolean useDouble;
+    private Boolean useSecret;
 
     //一个普通的构造函数
     //所有算分数需要用的东西都在这个地方传进来
-    public Score(int source, int mrXLoc, ScotlandYard.Ticket usedTicket, List<Integer> detectivesLoc) {
+    public Score(int source, int mrXLoc, ScotlandYard.Ticket usedTicket, List<Integer> detectivesLoc,
+                 Boolean useDouble, Boolean useSecret) {
         this.source = source;
         this.mrXLoc = mrXLoc;
-        this.usedTicket = usedTicket;
         this.detectivesLoc = detectivesLoc;
+        this.usedTicket = usedTicket;
+        this.useDouble = useDouble;
+        this.useSecret = useSecret;
     }
 
     /*
