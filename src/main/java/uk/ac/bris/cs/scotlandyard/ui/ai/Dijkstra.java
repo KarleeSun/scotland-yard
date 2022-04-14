@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 public class Dijkstra {
+    static int MAX = 100000;
     private final Board board;
     private final int[] distance;                         /*store distance from source to vertex(index)*/
     private final Set<Integer> terminated;                /*store terminated vertices*/
@@ -17,7 +18,7 @@ public class Dijkstra {
     private final List<List<Node>> adjacentNodes;         /*store all adjacent nodes of all nodes*/
     private final Node source;                            /*source node: mrX's location*/
     private final List<Integer> destinations;             /*detectivesLocation*/
-
+    //For multiple destination
     public Dijkstra(int mrXLocation, List<Integer> detectivesLocation, Board board) {
         this.board = board;
         V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
@@ -28,7 +29,7 @@ public class Dijkstra {
         destinations = detectivesLocation;
         distance = dijkstraShortestDistance(source.vertex);
     }
-
+    //For 1 destination
     public Dijkstra(int mrXLocation, int detectiveLocation, Board board) {
         this.board = board;
         V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
@@ -47,9 +48,9 @@ public class Dijkstra {
             detectiveDistances.add(distance[d]);
         }
         detectiveDistances.sort(Comparator.naturalOrder());
+        System.out.println(terminated);
         return detectiveDistances;
     }
-
     public int getDistance(){
         return distance[destinations.get(0)];
     }
@@ -68,7 +69,7 @@ public class Dijkstra {
             case "TAXI" -> 100 / ticketsCount[0];
             case "BUS" -> 100 / ticketsCount[1];
             case "UNDERGROUND" -> 100 / ticketsCount[2];
-            default -> 1000000;
+            default -> MAX;
         };
     }
 
@@ -98,12 +99,11 @@ public class Dijkstra {
     private int[] dijkstraShortestDistance(int source) {
         int[] sourceToVertexDistance = new int[V];
         adjacentNodes.addAll(getAllAdjacentNodes(board));  /*make an adjacency list of all vertex in the graph*/
-        for (int i = 0; i < V; i++) sourceToVertexDistance[i] = 1000000;        /*assign initial value*/
+        for (int i = 0; i < V; i++) sourceToVertexDistance[i] = MAX;        /*assign initial value*/
         sourceToVertexDistance[source] = 0;
         priorityQueue.add(new Node(source, 0));         /*add source to priority queue*/
-        while (terminated.size() != V - 1) {          /*terminated stores from 0*/
+        while (!terminated.containsAll(destinations)) {          /*terminated stores from 0*/
             Node w = priorityQueue.poll();          /*poll the first element in priority queue*/
-            System.out.println("PQ:" + priorityQueue.size());
             if (terminated.contains(w.vertex)) continue;         /*skip if already terminated shorter distance*/
             terminated.add(w.vertex);
             processAdjacentVertices(w, sourceToVertexDistance);         /*process adjacent vertices*/
@@ -112,15 +112,11 @@ public class Dijkstra {
     }
 
     private void processAdjacentVertices(Node w, int[] sourceToVertexDistance) {
-        System.out.println("w: " + w);
-        System.out.println("adjacent nodes: " + adjacentNodes.get(w.vertex).toString());
         for (Node v : adjacentNodes.get(w.vertex)) {      /*iterate through all adjacent nodes of 1 vertex*/
-            System.out.println("v: " + v);
             if (!terminated.contains(v.vertex)) {
                 int alternativeDistance = sourceToVertexDistance[w.vertex] + v.weight;        /*(source -> w) + (w -> v)*/
                 if (alternativeDistance < sourceToVertexDistance[v.vertex]) {
                     sourceToVertexDistance[v.vertex] = alternativeDistance;       /*update distance if nearer*/
-                    System.out.println("update distance: " + alternativeDistance);
                 }
                 priorityQueue.add(new Node(v.vertex, alternativeDistance));         /*add new node to priority queue*/
             }
