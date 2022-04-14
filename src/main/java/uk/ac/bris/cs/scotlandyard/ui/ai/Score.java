@@ -87,8 +87,8 @@ public class Score {
             transportationTypeNum += board.getSetup().graph.edgeValueOrDefault(loc,i, ImmutableSet.of()).size();
         }
         //测试用
-        System.out.println("transportationScore: "+ (2*adjacentNodesNum + transportationTypeNum));
-        return 2*adjacentNodesNum + transportationTypeNum; //先这么设置，不合适再改
+        System.out.println("transportationScore: "+ (2 * adjacentNodesNum + transportationTypeNum));
+        return 2 * adjacentNodesNum + transportationTypeNum; //先这么设置，不合适再改
     }
 
     //从起始点用这种交通方式能到几个点

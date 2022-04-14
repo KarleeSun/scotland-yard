@@ -25,13 +25,13 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 
 public class Xbot implements Ai {
     //成员变量及其初始化
-    private static Board board; //这样在这个class就能直接用，不用每个函数都再传入一遍board
+//    private static Board board = b; //这样在这个class就能直接用，不用每个函数都再传入一遍board
     private Piece.MrX MRX = Piece.MrX.MRX; //mrX的piece
-    private List<Piece.Detective> detectives = getAllDetectives(board); //所有detective的pieces，存在一个list里
-    private int mrXLoc = getCurrentMrXLoc(board) ; //记录mrX的位置和预测位置
-    private List<Integer> detectivesLoc = getCurrentDetectivesLoc(board); //记录detectives的位置 按顺序存在一个list里
-    private Map<ScotlandYard.Ticket, Integer> mrXTickets = getCurrentMrXTickets(); //存的是mrX的票
-    private Map<ScotlandYard.Ticket, Integer> detectivesTickets = getCurrentDetectiveTickets(); //存的是detective的票
+    private List<Piece.Detective> detectives; //所有detective的pieces，存在一个list里
+    private int mrXLoc; //记录mrX的位置和预测位置
+    private List<Integer> detectivesLoc; //记录detectives的位置 按顺序存在一个list里
+    private Map<ScotlandYard.Ticket, Integer> mrXTickets; //存的是mrX的票
+    private Map<ScotlandYard.Ticket, Integer> detectivesTickets; //存的是detective的票
     private ScotlandYard.Ticket usedTicket; //用了什么票也记一下
 
     //name of this AI
@@ -42,10 +42,17 @@ public class Xbot implements Ai {
 
     //pick the best move for mrX
     @Nonnull @Override
-    public Move pickMove(
-            @Nonnull Board board,
-            Pair<Long, TimeUnit> timeoutPair) {
-
+    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
+        detectives = getAllDetectives(board);
+        mrXLoc = getCurrentMrXLoc(board);
+        detectivesLoc = getCurrentDetectivesLoc(board);
+        mrXTickets = getCurrentMrXTickets(board);
+        detectivesTickets = getCurrentDetectiveTickets(board);
+        List l = new ArrayList<>();
+        l.add(4);
+        l.add(93);
+        Dijkstra d = new Dijkstra(33,l, board);
+        System.out.println(d.getDetectivesDistance());
         //测试用，记得删掉--------------------------------------------------------------------
         System.out.println("all available moves: "+ board.getAvailableMoves());
 
@@ -92,14 +99,14 @@ public class Xbot implements Ai {
         return detectiveLocations;
     }
 
-    private Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(){
+    private Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(@Nonnull Board board){
         Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
         for(ScotlandYard.Ticket t: ScotlandYard.Ticket.values())
             mrXTickets.put(t,board.getPlayerTickets(MRX).get().getCount(t));
         return mrXTickets;
     }
 
-    private Map<ScotlandYard.Ticket, Integer> getCurrentDetectiveTickets(){
+    private Map<ScotlandYard.Ticket, Integer> getCurrentDetectiveTickets(@Nonnull Board board){
         for(Piece.Detective d: detectives){
             for(ScotlandYard.Ticket t: ScotlandYard.Ticket.values())
                 mrXTickets.put(t,board.getPlayerTickets(d).get().getCount(t));
