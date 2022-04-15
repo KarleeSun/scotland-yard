@@ -23,8 +23,7 @@ public class Minimax {
     //刚开始创建这个node时候就可以传初始值，然后在node里面计算时候按需更改
     private class TreeNode {
         private Move move;
-        private int alpha;
-        private int beta;
+        private int score;
         private TreeNode parent;
         private List<TreeNode> children;
         private int mrXLoc;
@@ -36,12 +35,11 @@ public class Minimax {
         private Map<ScotlandYard.Ticket, Integer> detectivesTickets;
 
 
-        private TreeNode(Move move, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc, int turnNum,
+        private TreeNode(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc, int turnNum,
                          Boolean useDouble, Boolean useSecret, Map<ScotlandYard.Ticket, Integer> mrXTickets,
                          Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
             this.move = move;
-            this.alpha = alpha;
-            this.beta = beta;
+            this.score = score;
 //            this.source = source; //移动前的位置 不需要其实，因为他的出发位置就是他爹的到达位置
             this.mrXLoc = mrXLoc; //移动后mrX的位置
             this.detectivesLoc = detectivesLoc; //移动后detectives的位置
@@ -52,35 +50,34 @@ public class Minimax {
             this.detectivesTickets = detectivesTickets; //存的是detective的票
         }
 
-        private void addChild(TreeNode child) {
+        public void addChild(TreeNode child) {
             child.setParent(this);
             this.children.add(child);
         }
 
-        private void addChild(Move move, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
+        public void addChild(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
                               Boolean useDouble, Boolean useSecret) {
-            TreeNode child = new TreeNode(move, alpha, beta, mrXLoc, detectivesLoc, turnNum,
+            TreeNode child = new TreeNode(move, score, alpha, beta, mrXLoc, detectivesLoc, turnNum,
                     useDouble, useSecret, mrXTickets, detectivesTickets);
             this.children.add(child);
         }
 
-        private void setParent(TreeNode parent) { this.parent = parent; }
+        public void setParent(TreeNode parent) { this.parent = parent; }
 
-        private void remove(TreeNode node) { node.parent.children.remove(node); }
+        public void remove(TreeNode node) { node.parent.children.remove(node); }
 
-        private Move getMove() { return move; }
+        public Move getMove() { return move; }
 
-        private TreeNode getParent() { return parent; }
+        public TreeNode getParent() { return parent; }
 
-        private List<TreeNode> getChildren() { return children; }
+        public List<TreeNode> getChildren() { return children; }
 
-        private void setAlpha(int alpha) { this.alpha = alpha; }
-
-        private int getAlpha() { return alpha; }
-
-        private void setBeta(int beta) { this.beta = beta; }
-
-        private int getBeta() { return beta; }
+        public TreeNode getLastNode(TreeNode node){
+            if(!node.children.isEmpty()){
+                getLastNode(node.children.get(0));
+            }
+            return node.children.get(0);
+        }
     }
 
     //先要自己构建出一个tree
@@ -91,11 +88,11 @@ public class Minimax {
     //更新：turnNum, mrXLoc, detectivesLoc, mrXTickets, detectivesTickets, useSecret, useDouble
 
     //好了这就创建好了要用的tree
-    private void tree(@Nonnull Board board, Move move, int depth, int alpha, int beta, int mrXLoc,
+    private void tree(@Nonnull Board board, Move move, int score, int depth, int alpha, int beta, int mrXLoc,
                       List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                       Map<ScotlandYard.Ticket, Integer> mrXTickets,Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
         Xbot xbot = new Xbot();
-        TreeNode root = new TreeNode(null,MIN,MAX,mrXLoc,detectivesLoc,turnNum,
+        TreeNode root = new TreeNode(null, score MIN,MAX,mrXLoc,detectivesLoc,turnNum,
                 useDouble,useSecret, mrXTickets, detectivesTickets);
         createTree(board, root, depth, alpha, beta, mrXLoc, detectivesLoc,turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
     }
@@ -104,6 +101,7 @@ public class Minimax {
     //注意记录深度和轮数
     int depth = 3;
     private void createTree(@Nonnull Board board, TreeNode node, int d, int alpha, int beta, int mrXLoc,
+    private void createTree(@Nonnull Board board, TreeNode node, int depth, int score, int alpha, int beta, int mrXLoc,
                             List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                             Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets){
         //
@@ -157,12 +155,42 @@ public class Minimax {
                     createTree(board,node2,d,alpha,beta,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
                 }
             }
+
         }
     }
 
     //最终把最好的move传给root存到root的move里
-    public Move alphaBetaPruning(){
-        return null;
+    public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta){
+        if(node.children.isEmpty()){
+            return node;
+        }
+        TreeNode bestScoreNode = node;
+        if(maximizing){
+            bestScoreNode.score = MIN;
+            for(int i = 0; i < node.parent.children.size(); i ++){
+                TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, false, alpha, beta);
+                if(bestScoreNode.score <= scoreNode.score){
+                    bestScoreNode = scoreNode;
+                }
+                alpha = Math.max(alpha, bestScoreNode.score));
+                if(beta <= alpha)
+                    break;
+            }
+            return bestScoreNode;
+        }
+        else{
+            bestScoreNode.score = MAX;
+            for(int i = 0; i < node.parent.children.size(); i ++){
+                TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, true, alpha, beta);
+                if(bestScoreNode.score >= scoreNode.score){
+                    bestScoreNode = scoreNode
+                }
+                beta = Math.min(beta, bestScoreNode.score);
+                if(beta <= alpha)
+                    break;
+            }
+        }
+        return bestScoreNode;
     }
 }
 
