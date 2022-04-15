@@ -59,7 +59,7 @@ public class Xbot implements Ai {
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
         setUp(board);
         Minimax minimax = new Minimax();
-        return minimax.alphaBetaPruning();
+        return minimax.giveMove(board);
     }
 
     //=========================================================================================
