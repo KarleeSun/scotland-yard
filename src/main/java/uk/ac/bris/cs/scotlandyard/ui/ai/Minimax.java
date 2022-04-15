@@ -5,6 +5,7 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -96,36 +97,66 @@ public class Minimax {
         Xbot xbot = new Xbot();
         TreeNode root = new TreeNode(null,MIN,MAX,mrXLoc,detectivesLoc,turnNum,
                 useDouble,useSecret, mrXTickets, detectivesTickets);
-        createTree(board, root, depth, alpha, beta, mrXLoc, detectivesLoc, useDouble,useSecret, mrXTickets, detectivesTickets);
+        createTree(board, root, depth, alpha, beta, mrXLoc, detectivesLoc,turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
     }
 
     //递归 就循环着创这个树
     //注意记录深度和轮数
-    private void createTree(@Nonnull Board board, TreeNode node, int depth, int alpha, int beta, int mrXLoc,
+    int depth = 3;
+    private void createTree(@Nonnull Board board, TreeNode node, int d, int alpha, int beta, int mrXLoc,
                             List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                             Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets){
         //
         Xbot xbot = new Xbot();
-        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc)){
-            for(Move m: xbot.predictMrXMoves(board, mrXLoc, detectivesLoc)){
+        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d <= depth){ //如果游戏没有结束
+            d++;
+            for(Move m: xbot.predictMrXMoves(board, mrXLoc, detectivesLoc)){ //对于每一个mrX availablemove
                 //用一个visitor pattern把singlemove和doublemove分开考虑
-                Boolean  getMoveSuccess= m.accept(new Move.Visitor<Boolean>(){
+                Boolean getMoveSuccess= m.accept(new Move.Visitor<Boolean>(){
                     Boolean getMoveSuccess;
                     @Override
                     public Boolean visit(Move.SingleMove singleMove){
                         //在这里更新该更新的东西
-                        turnNum ++;
-
-
+                        TreeNode node1 = new TreeNode(singleMove,alpha,beta,mrXLoc,detectivesLoc,turnNum,useDouble,useSecret,mrXTickets,detectivesTickets);
+                        node1.mrXTickets = node1.parent.mrXTickets;
+                        node1.turnNum += 1;
+                        node1.mrXLoc = (int)xbot.getMoveInformation(singleMove).get("destination");
+                        ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket)xbot.getMoveInformation(singleMove).get("ticket");
+                        node1.mrXTickets.put(usedTicket, node1.mrXTickets.get(usedTicket)-1);
+                        if(usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
                         return getMoveSuccess;
                     }
                     @Override
                     public Boolean visit(Move.DoubleMove doubleMove){
+                        TreeNode node1 = new TreeNode(doubleMove,alpha,beta,mrXLoc,detectivesLoc,turnNum,useDouble,useSecret,mrXTickets,detectivesTickets);
+                        node1.turnNum += 2;
+                        node1.mrXLoc = (int)xbot.getMoveInformation(doubleMove).get("destination2");
+                        ScotlandYard.Ticket ticket1 = (ScotlandYard.Ticket)xbot.getMoveInformation(doubleMove).get("ticket1");
+                        ScotlandYard.Ticket ticket2 = (ScotlandYard.Ticket)xbot.getMoveInformation(doubleMove).get("ticket2");
+                        node1.mrXTickets.put(ticket1,node1.mrXTickets.get(ticket1)-1);
+                        node1.mrXTickets.put(ticket2,node1.mrXTickets.get(ticket2)-1);
+                        if(ticket1 == ScotlandYard.Ticket.SECRET || ticket2 == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
+                        node1.useDouble = true;
                         return getMoveSuccess;
                     }
                 });
+                List<List<Map<Integer, ScotlandYard.Ticket>>> allPossibleDetectivesLoc = xbot.predictDetectiveMoves(board,mrXLoc,detectivesLoc);
+                for(List<Map<Integer,ScotlandYard.Ticket>> possibleDetectivesLoc : allPossibleDetectivesLoc){ //对于一组可行的detetctives move
+                    TreeNode node2 = new TreeNode(null,alpha,beta,mrXLoc,detectivesLoc,turnNum,useDouble,useSecret,mrXTickets,detectivesTickets);
+                    List<Integer> dLocs = new ArrayList<>();
+                    List<ScotlandYard.Ticket> usedTicketList = new ArrayList<>();
+                    for(Map<Integer,ScotlandYard.Ticket> map1 : possibleDetectivesLoc){
+                        dLocs.add(map1.keySet().stream().toList().get(0));
+                        usedTicketList.add(map1.values().stream().toList().get(0));
+                    }
+                    node2.detectivesLoc.addAll(dLocs);
+                    for(ScotlandYard.Ticket t: usedTicketList){
+                        node2.detectivesTickets.put(t,detectivesTickets.get(t)-1);
+                        node2.mrXTickets.put(t,mrXTickets.get(t)+1);
+                    }
+                    createTree(board,node2,d,alpha,beta,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
+                }
             }
-
         }
     }
 

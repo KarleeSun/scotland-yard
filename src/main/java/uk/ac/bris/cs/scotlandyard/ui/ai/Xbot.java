@@ -44,6 +44,7 @@ public class Xbot implements Ai {
     private Boolean useDouble; //有没有用double票
     private Boolean useSecret; //有没有用secret票
     private int turnNum; //记录一下轮数
+    private ScotlandYard.Ticket usedTicket; //存那个detective他用的票
 
     //name of this AI
     @Nonnull
@@ -134,21 +135,15 @@ public class Xbot implements Ai {
     //对于mrX
     //应该是确定走这一步了才能更新，就是在那个树里更新而不是在这更新
     private List<Move.SingleMove> makeSingleMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
-        source = mrXLoc;
         List<Move.SingleMove> possibleMoves = new ArrayList<>();
         Set<Integer> destination = board.getSetup().graph.adjacentNodes(source);
         for (int d : destination) {
             if (mrXTickets.get(ScotlandYard.Ticket.SECRET) >= 1 && (!detectivesLoc.contains(d))) {
                 possibleMoves.add(new Move.SingleMove(MRX, source, ScotlandYard.Ticket.SECRET, d));
-//                    useSecret = true; //更新secret票使用情况
-//                    mrXTickets.put(ScotlandYard.Ticket.SECRET,mrXTickets.get(ScotlandYard.Ticket.SECRET)-1); //更新牌堆
-//                    mrXLoc = d; //更新mrX位置
             }
             for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
                 if (mrXTickets.get(t.requiredTicket()) >= 1 && (!detectivesLoc.contains(d))) {
                     possibleMoves.add(new Move.SingleMove(MRX, source, t.requiredTicket(), d));
-//                    mrXTickets.put(t.requiredTicket(),mrXTickets.get(t.requiredTicket())-1); //更新牌堆
-//                    mrXLoc = d; //更新mrX位置
                 }
             }
         }
@@ -158,8 +153,6 @@ public class Xbot implements Ai {
     private List<Move.DoubleMove> makeDoubleMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
         //先判断它有没有double票
         if (mrXTickets.get(ScotlandYard.Ticket.DOUBLE) == 0) return new ArrayList<>();
-        source = mrXLoc; //更新一下起始位置
-        useDouble = true; //更新一下double票的使用情况
         mrXTickets.put(ScotlandYard.Ticket.DOUBLE,mrXTickets.get(ScotlandYard.Ticket.DOUBLE)-1); //减一张double票
         List<Move.DoubleMove> doubleAvailableMoves = new ArrayList<>();
         //store all available first move by invoke makeSingleMove method
@@ -188,42 +181,52 @@ public class Xbot implements Ai {
 
     //------------------------------------------------------------------------------------------------------------------
 
-
     //用来在minimax中预测detectives会做的理论最优选择
     //对于detective，无所谓他选择的move，所以只返回更新过后的位置
     //detectives的问题也一样，他们的票和位置应该在树里更新而不是在这更新
     //应该是对所有detectives能走的情况都处理，而不仅仅是处理最优情况
     //所以还要再重写这个函数
     //要么这个就返回二维数组 存所有可能的detectives的位置
-    public List<Integer> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
-        detectiveSources.clear();
-        detectiveSources.addAll(detectivesLoc); //记录一下起始位置
-        List<List<Integer>> allPossibleDetectivesLoc = new ArrayList<>(); //二维数组记录所有detectives可能到的位置
-        List<Integer> updatedDetectivesLoc = new ArrayList<>();
+    public List<List<Map<Integer, ScotlandYard.Ticket>>> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
+        int detectivesNum = detectives.size(); //有几个detectives
+        List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMoves = new ArrayList<>();
+        List<Map<Integer,ScotlandYard.Ticket>> oneDetectiveMoves = new ArrayList<>();
+        Map<Integer,ScotlandYard.Ticket> locWithTicket = new HashMap<>();
         //然后每个detective都走到了距离-1的地方
-        for(Integer dLoc: detectivesLoc){
+        for(Integer dLoc: detectivesLoc){ //对于每一个detective
             Dijkstra dj = new Dijkstra(mrXLoc, dLoc, board);
             int distance = dj.getDistance();
             for (int d: board.getSetup().graph.adjacentNodes(dLoc)){
+                oneDetectiveMoves.clear();
                 Dijkstra dk = new Dijkstra(mrXLoc, d, board);
                 if(!detectivesLoc.contains(d) && dk.getDistance() == distance-1){
-                    //这写的大概有一点问题
                     for(ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc,d,ImmutableSet.of())){
                         if(detectivesTickets.get(t.requiredTicket()) >= 1){
-                            //在树里面更新
-//                            detectivesTickets.put(t.requiredTicket(),detectivesTickets.get(t.requiredTicket())-1);
-//                            mrXTickets.put(t.requiredTicket(), mrXTickets.get(t.requiredTicket())+1);
-                            continue;
+                            locWithTicket.put(d,t.requiredTicket());
+                            oneDetectiveMoves.add(locWithTicket);
                         }
                     }
-                    updatedDetectivesLoc.add(d);
-                    continue;
                 }
+                allDetectiveMoves.add(oneDetectiveMoves);
             }
         }
-        detectivesLoc.clear();
-        detectivesLoc.addAll(updatedDetectivesLoc);
-        return detectivesLoc;
+        allDetectiveMoves.clear();
+        allDetectiveMoves.add(oneDetectiveMoves);
+        List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMovesResult = new ArrayList<>();
+        List<Map<Integer, ScotlandYard.Ticket>> result = new ArrayList<>();
+        for(int k = 0; k< detectivesNum; k++){
+            int i,j;
+            for(i = 0; i< detectivesNum; i++){
+                for(j=0;j< allDetectiveMoves.get(i).size();j++){
+                    if (i<k) j++; //
+                    result.add(allDetectiveMoves.get(i).get(j));
+                    i++;
+                }
+                i=0;
+            }
+            allDetectiveMovesResult.add(result);
+        }
+        return allDetectiveMovesResult;
     }
 
     //就只给两种情况吧 踩上了或者轮数到了 或者moves是空的
