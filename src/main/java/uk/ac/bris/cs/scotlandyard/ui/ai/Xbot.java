@@ -41,9 +41,9 @@ public class Xbot implements Ai {
     private List<Integer> detectiveSources; //同上，存detectives的sources
     private Map<ScotlandYard.Ticket, Integer> mrXTickets; //存的是mrX的票
     private Map<ScotlandYard.Ticket, Integer> detectivesTickets; //存的是detective的票
-    //    private ScotlandYard.Ticket usedTicket; //用了什么票也记一下
     private Boolean useDouble; //有没有用double票
     private Boolean useSecret; //有没有用secret票
+    private int turnNum; //记录一下轮数
 
     //name of this AI
     @Nonnull
@@ -57,15 +57,8 @@ public class Xbot implements Ai {
     @Override
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
         setUp(board);
-
-        //测试用，记得删掉--------------------------------------------------------------------
-        System.out.println("all available moves: " + board.getAvailableMoves());
-
-        //---------------------------------------------------------------------------------
-
         Minimax minimax = new Minimax();
-
-        return null;
+        return minimax.alphaBetaPruning();
     }
 
     //=========================================================================================
@@ -80,6 +73,7 @@ public class Xbot implements Ai {
         detectivesTickets = getCurrentDetectiveTickets(board);
         useDouble = false;
         useSecret = false;
+        turnNum = board.getMrXTravelLog().size();
     }
 
 
@@ -129,6 +123,13 @@ public class Xbot implements Ai {
         return detectives;
     }
     //====================================================================================================
+
+    public List<Move> predictMrXMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
+        List<Move> moves = new ArrayList<>();
+        moves.addAll(makeSingleMoves(board, mrXLoc, detectivesLoc));
+        moves.addAll(makeDoubleMoves(board, mrXLoc, detectivesLoc));
+        return moves;
+    }
 
     //对于mrX
     //应该是确定走这一步了才能更新，就是在那个树里更新而不是在这更新
@@ -191,9 +192,13 @@ public class Xbot implements Ai {
     //用来在minimax中预测detectives会做的理论最优选择
     //对于detective，无所谓他选择的move，所以只返回更新过后的位置
     //detectives的问题也一样，他们的票和位置应该在树里更新而不是在这更新
-    private List<Integer> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
+    //应该是对所有detectives能走的情况都处理，而不仅仅是处理最优情况
+    //所以还要再重写这个函数
+    //要么这个就返回二维数组 存所有可能的detectives的位置
+    public List<Integer> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
         detectiveSources.clear();
         detectiveSources.addAll(detectivesLoc); //记录一下起始位置
+        List<List<Integer>> allPossibleDetectivesLoc = new ArrayList<>(); //二维数组记录所有detectives可能到的位置
         List<Integer> updatedDetectivesLoc = new ArrayList<>();
         //然后每个detective都走到了距离-1的地方
         for(Integer dLoc: detectivesLoc){
@@ -205,8 +210,9 @@ public class Xbot implements Ai {
                     //这写的大概有一点问题
                     for(ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc,d,ImmutableSet.of())){
                         if(detectivesTickets.get(t.requiredTicket()) >= 1){
-                            detectivesTickets.remove(t.requiredTicket());
-                            mrXTickets.put(t.requiredTicket(), mrXTickets.get(t.requiredTicket())+1);
+                            //在树里面更新
+//                            detectivesTickets.put(t.requiredTicket(),detectivesTickets.get(t.requiredTicket())-1);
+//                            mrXTickets.put(t.requiredTicket(), mrXTickets.get(t.requiredTicket())+1);
                             continue;
                         }
                     }
@@ -218,6 +224,19 @@ public class Xbot implements Ai {
         detectivesLoc.clear();
         detectivesLoc.addAll(updatedDetectivesLoc);
         return detectivesLoc;
+    }
+
+    //就只给两种情况吧 踩上了或者轮数到了 或者moves是空的
+    public Boolean hasWinner(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
+        //mr X being caught
+        if(detectivesLoc.contains(mrXLoc)) return true;
+        //no more round left  && detectives all made moves for this round
+        if (turnNum == board.getSetup().moves.size()) return true;
+        //或者moves空的
+        if(predictMrXMoves(board,mrXLoc,detectivesLoc).isEmpty() || predictDetectiveMoves(board, mrXLoc, detectivesLoc).isEmpty())
+            return true;
+        //no winner yet
+        return false;
     }
 
 
@@ -233,28 +252,33 @@ public class Xbot implements Ai {
      */
 
     //这个函数用来得到我想得到的全部信息
-    private Map<String, Object> getMoveInformation(Move move){
+    public Map<String, Object> getMoveInformation(Move move){
         Map<String,Object> moveInfoMap = move.accept(new Move.Visitor<Map<String,Object>>(){
             Map<String, Object> moveInfo;
             @Override
             public Map<String,Object> visit(Move.SingleMove singleMove){
                 //moveInfo = Map.of()可以将多个元素一次性添加进去
-                moveInfo.put("isSingleMove",true);
+                moveInfo.put("isDoubleMove",false);
                 moveInfo.put("piece",singleMove.commencedBy());
                 moveInfo.put("source",singleMove.source());
                 moveInfo.put("ticket",singleMove.ticket);
                 moveInfo.put("destination",singleMove.destination);
+                moveInfo.put("useSecret",false);
+                if(singleMove.ticket == ScotlandYard.Ticket.SECRET) moveInfo.put("useSecret",true);
                 return moveInfo;
             }
             @Override
             public Map<String,Object> visit(Move.DoubleMove doubleMove){
-                moveInfo.put("isSingleMove",false);
+                moveInfo.put("isDoubleMove",true);
                 moveInfo.put("piece",doubleMove.commencedBy());
                 moveInfo.put("source",doubleMove.source());
                 moveInfo.put("ticket1",doubleMove.ticket1);
                 moveInfo.put("destination1",doubleMove.destination1);
                 moveInfo.put("ticket2",doubleMove.ticket2);
                 moveInfo.put("destination2",doubleMove.destination2);
+                moveInfo.put("useSecret",false);
+                if(doubleMove.ticket1 == ScotlandYard.Ticket.SECRET || doubleMove.ticket2 == ScotlandYard.Ticket.SECRET)
+                    moveInfo.put("useSecret",true);
                 return moveInfo;
             }
         });
