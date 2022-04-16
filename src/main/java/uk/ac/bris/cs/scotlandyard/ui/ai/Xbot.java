@@ -38,13 +38,14 @@ public class Xbot implements Ai {
     private int mrXLoc; //记录mrX的位置和预测位置 相当于move的destination
     private List<Integer> detectivesLoc; //记录detectives的位置 按顺序存在一个list里 相当于是destination
     private int source; //相当于一个move的source，也许没必要，先写着
-    private List<Integer> detectiveSources; //同上，存detectives的sources
+//    private List<Integer> detectiveSources; //同上，存detectives的sources
     private Map<ScotlandYard.Ticket, Integer> mrXTickets; //存的是mrX的票
     private Map<ScotlandYard.Ticket, Integer> detectivesTickets; //存的是detective的票
     private Boolean useDouble; //有没有用double票
     private Boolean useSecret; //有没有用secret票
     private int turnNum; //记录一下轮数
     private ScotlandYard.Ticket usedTicket; //存那个detective他用的票
+
 
     //name of this AI
     @Nonnull
@@ -57,13 +58,17 @@ public class Xbot implements Ai {
     @Nonnull
     @Override
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
-        setUp(board);
         Minimax minimax = new Minimax();
-        return minimax.giveMove(board);
+        setUp(board); //在这setup了，可是在这外面，这个class里没有set
+        System.out.println("mrXTickets: "+mrXTickets);
+        Minimax.TreeNode node = minimax.tree(board,null,0,3,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
+        return minimax.miniMaxAlphaBeta(node,3,false,minimax.MIN,minimax.MAX).move;
     }
 
     //=========================================================================================
     //这些不用再改了
+    //这个setup它set了一个寂寞
+
     private void setUp(@Nonnull Board board) {
         MRX = Piece.MrX.MRX;
         detectives = getAllDetectives(board);
@@ -127,16 +132,21 @@ public class Xbot implements Ai {
     }
     //====================================================================================================
 
-    public List<Move> predictMrXMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
+    public List<Move> predictMrXMoves(@Nonnull Board board, Piece MRX,int mrXLoc, List<Integer> detectivesLoc,Map<ScotlandYard.Ticket, Integer> mrXTickets){
+
         List<Move> moves = new ArrayList<>();
-        moves.addAll(makeSingleMoves(board, mrXLoc, detectivesLoc));
-        moves.addAll(makeDoubleMoves(board, mrXLoc, detectivesLoc));
+        moves.addAll(makeSingleMoves(board, MRX,mrXLoc, detectivesLoc,mrXTickets));
+        moves.addAll(makeDoubleMoves(board, MRX,mrXLoc, detectivesLoc,mrXTickets));
+        System.out.println("moves: "+moves);
         return moves;
     }
 
     //对于mrX
     //应该是确定走这一步了才能更新，就是在那个树里更新而不是在这更新
-    private List<Move.SingleMove> makeSingleMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
+    private List<Move.SingleMove> makeSingleMoves(@Nonnull Board board, Piece MRX, int mrXLoc, List<Integer> detectivesLoc,
+                                                  Map<ScotlandYard.Ticket, Integer> mrXTickets) {
+        source = mrXLoc;
+        System.out.println("mrXTickets: 99"+mrXTickets);
         List<Move.SingleMove> possibleMoves = new ArrayList<>();
         Set<Integer> destination = board.getSetup().graph.adjacentNodes(source);
         for (int d : destination) {
@@ -145,25 +155,26 @@ public class Xbot implements Ai {
             }
             for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
                 if (mrXTickets.get(t.requiredTicket()) >= 1 && (!detectivesLoc.contains(d))) {
-                    possibleMoves.add(new Move.SingleMove(MRX, source, t.requiredTicket(), d));
+                    possibleMoves.add(new Move.SingleMove(MRX, mrXLoc, t.requiredTicket(), d));
                 }
             }
         }
         return possibleMoves;
     }
 
-    private List<Move.DoubleMove> makeDoubleMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
+    private List<Move.DoubleMove> makeDoubleMoves(@Nonnull Board board,Piece MRX, int mrXLoc, List<Integer> detectivesLoc,
+                                                  Map<ScotlandYard.Ticket, Integer> mrXTickets){
         //先判断它有没有double票
         if (mrXTickets.get(ScotlandYard.Ticket.DOUBLE) == 0) return new ArrayList<>();
         mrXTickets.put(ScotlandYard.Ticket.DOUBLE,mrXTickets.get(ScotlandYard.Ticket.DOUBLE)-1); //减一张double票
         List<Move.DoubleMove> doubleAvailableMoves = new ArrayList<>();
         //store all available first move by invoke makeSingleMove method
-        List<Move.SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(board,mrXLoc,detectivesLoc));
+        List<Move.SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(board,MRX,mrXLoc,detectivesLoc,mrXTickets));
         //iterate through all possible single moves and store its corresponding second move
         for (Move.SingleMove firstMove : firstAvailableMoves){
             /* store second available moves*/
             List<Move.SingleMove> secondAvailableMoves = new ArrayList<>(
-                    makeSingleMoves(board,firstMove.destination,detectivesLoc));
+                    makeSingleMoves(board,MRX,firstMove.destination,detectivesLoc, mrXTickets));
             //iterate through all possible second move for a particular first move and create new double move and store it
             ScotlandYard.Ticket ticketUsed = firstMove.ticket;
             Integer ticketLeft = mrXTickets.get(ticketUsed);
@@ -172,8 +183,6 @@ public class Xbot implements Ai {
                     if (!(secondMove.ticket == ticketUsed) || ticketLeft >= 2) {
                         doubleAvailableMoves.add( new Move.DoubleMove(MRX, firstMove.source(),
                                 firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination));
-//                        mrXTickets.put(secondMove.ticket,mrXTickets.get(secondMove.ticket)-1); //更新一下票
-//                        mrXLoc = secondMove.destination; //更新一下位置
                     }
                 }
             }
@@ -190,6 +199,8 @@ public class Xbot implements Ai {
     //所以还要再重写这个函数
     //要么这个就返回二维数组 存所有可能的detectives的位置
     public List<List<Map<Integer, ScotlandYard.Ticket>>> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
+        System.out.println("111111");
+        detectives = getAllDetectives(board);
         int detectivesNum = detectives.size(); //有几个detectives
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMoves = new ArrayList<>();
         List<Map<Integer,ScotlandYard.Ticket>> oneDetectiveMoves = new ArrayList<>();
@@ -214,6 +225,7 @@ public class Xbot implements Ai {
         }
         allDetectiveMoves.clear();
         allDetectiveMoves.add(oneDetectiveMoves);
+        System.out.println("allDetectiveMoves: "+allDetectiveMoves);
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMovesResult = new ArrayList<>();
         List<Map<Integer, ScotlandYard.Ticket>> result = new ArrayList<>();
         for(int k = 0; k< detectivesNum; k++){
@@ -228,6 +240,7 @@ public class Xbot implements Ai {
             }
             allDetectiveMovesResult.add(result);
         }
+        System.out.println("allDetectiveMovesResult: "+allDetectiveMovesResult);
         return allDetectiveMovesResult;
     }
 
@@ -238,8 +251,8 @@ public class Xbot implements Ai {
         //no more round left  && detectives all made moves for this round
         if (turnNum == board.getSetup().moves.size()) return true;
         //或者moves空的
-        if(predictMrXMoves(board,mrXLoc,detectivesLoc).isEmpty() || predictDetectiveMoves(board, mrXLoc, detectivesLoc).isEmpty())
-            return true;
+//        if(predictMrXMoves(board,mrXLoc,detectivesLoc,mrXTickets).isEmpty() || predictDetectiveMoves(board, mrXLoc, detectivesLoc).isEmpty())
+//            return true;
         //no winner yet
         return false;
     }
