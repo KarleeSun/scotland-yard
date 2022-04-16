@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Minimax {
-    private static int MIN = -100000;
-    private static int MAX = 100000;
+    public static int MIN = -100000;
+    public static int MAX = 100000;
     private int mrXLoc;
     private List<Integer> detectivesLoc;
     private int turnNum; //记录轮数，记得每次走完更新
@@ -21,8 +21,8 @@ public class Minimax {
     private Map<ScotlandYard.Ticket, Integer> detectivesTickets;
     //对于每一个结点他就存了这些值，可以设置成如果不传入就是默认，或者就传入吧也累不死
     //刚开始创建这个node时候就可以传初始值，然后在node里面计算时候按需更改
-    private class TreeNode {
-        private Move move;
+    public class TreeNode {
+        public Move move;
         private int score;
         private TreeNode parent;
         private List<TreeNode> children;
@@ -35,7 +35,7 @@ public class Minimax {
         private Map<ScotlandYard.Ticket, Integer> detectivesTickets;
 
 
-        private TreeNode(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc, int turnNum,
+        public TreeNode(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc, int turnNum,
                          Boolean useDouble, Boolean useSecret, Map<ScotlandYard.Ticket, Integer> mrXTickets,
                          Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
             this.move = move;
@@ -84,27 +84,33 @@ public class Minimax {
     //更新：turnNum, mrXLoc, detectivesLoc, mrXTickets, detectivesTickets, useSecret, useDouble
 
     //好了这就创建好了要用的tree
-    private TreeNode tree(@Nonnull Board board, Move move, int score, int depth, int alpha, int beta, int mrXLoc,
+    public TreeNode tree(@Nonnull Board board, Move move, int score, int depth, int alpha, int beta, int mrXLoc,
                       List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                       Map<ScotlandYard.Ticket, Integer> mrXTickets,Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
+        System.out.println("here: "+mrXTickets);
         Xbot xbot = new Xbot();
+        System.out.println("here1: "+mrXTickets);
         TreeNode root = new TreeNode(null, score, MIN,MAX,mrXLoc,detectivesLoc,turnNum,
                 useDouble,useSecret, mrXTickets, detectivesTickets);
+        System.out.println("here2: "+mrXTickets);
         createTree(board, root, depth, score, alpha, beta, mrXLoc, detectivesLoc,turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
+        System.out.println("here3: "+mrXTickets);
         return root;
     }
 
     //递归 就循环着创这个树
     //注意记录深度和轮数
-    int depth = 3;
-    private void createTree(@Nonnull Board board, TreeNode node, int d, int score, int alpha, int beta, int mrXLoc,
+    int d = 0;
+    private void createTree(@Nonnull Board board, TreeNode node, int depth, int score, int alpha, int beta, int mrXLoc,
                             List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                             Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets){
         //
         Xbot xbot = new Xbot();
-        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d <= depth){ //如果游戏没有结束
+        System.out.println("creatTree: "+mrXTickets);
+        if( d <= depth){ //如果游戏没有结束
+//        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d <= depth){ //如果游戏没有结束
             d++;
-            for(Move m: xbot.predictMrXMoves(board, mrXLoc, detectivesLoc)){ //对于每一个mrX availablemove
+            for(Move m: xbot.predictMrXMoves(board, mrXLoc, detectivesLoc,mrXTickets)){ //对于每一个mrX availablemove
                 //用一个visitor pattern把singlemove和doublemove分开考虑
                 TreeNode node1= m.accept(new Move.Visitor<TreeNode>(){
                     @Override
@@ -114,6 +120,7 @@ public class Minimax {
                         node1.mrXTickets = node1.parent.mrXTickets;
                         node1.turnNum += 1;
                         node1.mrXLoc = (int)xbot.getMoveInformation(singleMove).get("destination");
+                        System.out.println("2"+mrXTickets);
                         ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket)xbot.getMoveInformation(singleMove).get("ticket");
                         node1.mrXTickets.put(usedTicket, node1.mrXTickets.get(usedTicket)-1);
                         if(usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
@@ -157,7 +164,7 @@ public class Minimax {
     }
 
     //最终把最好的move传给root存到root的move里
-    private TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta){
+    public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta){
         if(node.children.isEmpty()){
             return node;
         }
@@ -190,9 +197,5 @@ public class Minimax {
         return bestScoreNode;
     }
 
-    public Move giveMove(@Nonnull Board board){
-        TreeNode node = tree(board,null,0,3,MIN,MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
-        return miniMaxAlphaBeta(node,3,false,MIN,MAX).move;
-    }
 }
 
