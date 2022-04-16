@@ -6,6 +6,7 @@ import uk.ac.bris.cs.scotlandyard.model.Piece;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
 import javax.annotation.Nonnull;
+import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ public class Minimax {
                          Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
             this.move = move;
             this.score = score;
+            this.children = new ArrayList<>();
 //            this.source = source; //移动前的位置 不需要其实，因为他的出发位置就是他爹的到达位置
             this.mrXLoc = mrXLoc; //移动后mrX的位置
             this.detectivesLoc = detectivesLoc; //移动后detectives的位置
@@ -53,8 +55,8 @@ public class Minimax {
         }
 
         private void addChild(TreeNode child) {
-            child.setParent(this);
             this.children.add(child);
+            if(!child.parent.equals(this)) child.setParent(this);
         }
 
         private void addChild(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
@@ -62,7 +64,7 @@ public class Minimax {
             TreeNode child = new TreeNode(move, score, alpha, beta, mrXLoc, detectivesLoc, turnNum,
                     useDouble, useSecret, mrXTickets, detectivesTickets);
             this.children.add(child);
-            child.setParent(this);
+            if(!child.parent.equals(this)) child.setParent(this);
         }
 
         private void setParent(TreeNode parent) {
