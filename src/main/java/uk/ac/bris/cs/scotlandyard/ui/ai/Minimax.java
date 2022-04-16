@@ -2,6 +2,7 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import uk.ac.bris.cs.scotlandyard.model.Board;
 import uk.ac.bris.cs.scotlandyard.model.Move;
+import uk.ac.bris.cs.scotlandyard.model.Piece;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
 import javax.annotation.Nonnull;
@@ -12,6 +13,7 @@ import java.util.Map;
 public class Minimax {
     public static int MIN = -100000;
     public static int MAX = 100000;
+    public static Piece.MrX mrX = Piece.MrX.MRX;
     private int mrXLoc;
     private List<Integer> detectivesLoc;
     private int turnNum; //记录轮数，记得每次走完更新
@@ -65,7 +67,7 @@ public class Minimax {
 
         private void setParent(TreeNode parent) {
             this.parent = parent;
-            parent.addChild(this);
+            if(!parent.children.contains(this)) parent.addChild(this);
         }
 
         private Move getMove() { return move; }
@@ -107,23 +109,33 @@ public class Minimax {
         //
         Xbot xbot = new Xbot();
         System.out.println("creatTree: "+mrXTickets);
-        if( d <= depth){ //如果游戏没有结束
-//        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d <= depth){ //如果游戏没有结束
+        System.out.println("hasWinner: "+!xbot.hasWinner(board,mrXLoc,detectivesLoc));
+        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d <= depth){ //如果游戏没有结束
+            System.out.println("00000000");
             d++;
-            for(Move m: xbot.predictMrXMoves(board, mrXLoc, detectivesLoc,mrXTickets)){ //对于每一个mrX availablemove
+            for(Move m: xbot.predictMrXMoves(board, mrX,mrXLoc, detectivesLoc,mrXTickets)){ //对于每一个mrX availablemove
+                System.out.println("1234567");
                 //用一个visitor pattern把singlemove和doublemove分开考虑
                 TreeNode node1= m.accept(new Move.Visitor<TreeNode>(){
                     @Override
                     public TreeNode visit(Move.SingleMove singleMove){
                         //在这里更新该更新的东西
+                        System.out.println("7654321");
                         TreeNode node1 = new TreeNode(singleMove,score,alpha,beta,mrXLoc,detectivesLoc,turnNum,useDouble,useSecret,mrXTickets,detectivesTickets);
+                        System.out.println("node1: "+node1);
+                        node1.setParent(node);
+                        System.out.println("a");
                         node1.mrXTickets = node1.parent.mrXTickets;
+                        System.out.println("b");
                         node1.turnNum += 1;
+                        System.out.println("c");
                         node1.mrXLoc = (int)xbot.getMoveInformation(singleMove).get("destination");
-                        System.out.println("2"+mrXTickets);
+                        System.out.println("whywhy");
+                        System.out.println("node1: "+node1);
                         ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket)xbot.getMoveInformation(singleMove).get("ticket");
                         node1.mrXTickets.put(usedTicket, node1.mrXTickets.get(usedTicket)-1);
                         if(usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
+                        System.out.println("node1: "+node1);
                         return node1;
                     }
                     @Override
@@ -140,11 +152,12 @@ public class Minimax {
                         return node1;
                     }
                 });
-                node1.setParent(node);
+                System.out.println("33333333");
                 List<List<Map<Integer, ScotlandYard.Ticket>>> allPossibleDetectivesLoc = xbot.predictDetectiveMoves(board,mrXLoc,detectivesLoc);
                 for(List<Map<Integer,ScotlandYard.Ticket>> possibleDetectivesLoc : allPossibleDetectivesLoc){ //对于一组可行的detetctives move
                     TreeNode node2 = new TreeNode(null,score,alpha,beta,mrXLoc,detectivesLoc,turnNum,useDouble,useSecret,mrXTickets,detectivesTickets);
                     node1.addChild(node2);
+                    System.out.println("444444");
                     List<Integer> dLocs = new ArrayList<>();
                     List<ScotlandYard.Ticket> usedTicketList = new ArrayList<>();
                     for(Map<Integer,ScotlandYard.Ticket> map1 : possibleDetectivesLoc){
@@ -156,6 +169,7 @@ public class Minimax {
                         node2.detectivesTickets.put(t,detectivesTickets.get(t)-1);
                         node2.mrXTickets.put(t,mrXTickets.get(t)+1);
                     }
+                    System.out.println("5555555");
                     createTree(board,node2,d,score,alpha,beta,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
                 }
             }
