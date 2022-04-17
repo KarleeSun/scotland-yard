@@ -101,7 +101,7 @@ public class Xbot implements Ai {
         return detectiveLocations;
     }
 
-    private Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(@Nonnull Board board) {
+    public Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(@Nonnull Board board) {
         Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
         for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values())
             mrXTickets.put(t, board.getPlayerTickets(MRX).get().getCount(t));
