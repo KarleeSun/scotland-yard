@@ -52,11 +52,12 @@ public class Minimax {
             this.useSecret = useSecret; //有没有用secret卡
             this.mrXTickets = mrXTickets; //存的是mrX的票
             this.detectivesTickets = detectivesTickets; //存的是detective的票
+//            this.parent = new TreeNode(null,0,MIN,MAX,0,null,0,false,false,null,null);
         }
 
         private void addChild(TreeNode child) {
             this.children.add(child);
-            if(!child.parent.equals(this)) child.setParent(this);
+            if(child.parent == null) child.setParent(this);
         }
 
         private void addChild(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
@@ -91,14 +92,15 @@ public class Minimax {
     public TreeNode tree(@Nonnull Board board, Move move, int score, int depth, int alpha, int beta, int mrXLoc,
                       List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                       Map<ScotlandYard.Ticket, Integer> mrXTickets,Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
-        System.out.println("here: "+mrXTickets);
+        System.out.println("here: "+detectivesTickets);
+        System.out.println("mrXTickets: "+mrXTickets);
         Xbot xbot = new Xbot();
-        System.out.println("here1: "+mrXTickets);
+        System.out.println("here1: "+detectivesTickets);
         TreeNode root = new TreeNode(null, score, MIN,MAX,mrXLoc,detectivesLoc,turnNum,
                 useDouble,useSecret, mrXTickets, detectivesTickets);
-        System.out.println("here2: "+mrXTickets);
+        System.out.println("here2: "+detectivesTickets);
         createTree(board, root, depth, score, alpha, beta, mrXLoc, detectivesLoc,turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
-        System.out.println("here3: "+mrXTickets);
+        System.out.println("here3: "+detectivesTickets);
         return root;
     }
 
@@ -110,9 +112,11 @@ public class Minimax {
                             Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets){
         //
         Xbot xbot = new Xbot();
+        System.out.println("depth d: "+d);
+        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         System.out.println("creatTree: "+mrXTickets);
         System.out.println("hasWinner: "+!xbot.hasWinner(board,mrXLoc,detectivesLoc));
-        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d <= depth){ //如果游戏没有结束
+        if(!xbot.hasWinner(board,mrXLoc,detectivesLoc) && d < depth){ //如果游戏没有结束
             System.out.println("00000000");
             d++;
             for(Move m: xbot.predictMrXMoves(board, mrX,mrXLoc, detectivesLoc,mrXTickets)){ //对于每一个mrX availablemove
@@ -130,7 +134,8 @@ public class Minimax {
                         node1.mrXTickets = node1.parent.mrXTickets;
                         System.out.println("b");
                         node1.turnNum += 1;
-                        System.out.println("c");
+                        System.out.println("singleMOve here: "+singleMove);
+                        System.out.println("getMoveInformation: "+xbot.getMoveInformation(singleMove));
                         node1.mrXLoc = (int)xbot.getMoveInformation(singleMove).get("destination");
                         System.out.println("whywhy");
                         System.out.println("node1: "+node1);
@@ -155,7 +160,7 @@ public class Minimax {
                     }
                 });
                 System.out.println("33333333");
-                List<List<Map<Integer, ScotlandYard.Ticket>>> allPossibleDetectivesLoc = xbot.predictDetectiveMoves(board,mrXLoc,detectivesLoc);
+                List<List<Map<Integer, ScotlandYard.Ticket>>> allPossibleDetectivesLoc = xbot.predictDetectiveMoves(board,mrXLoc,detectivesLoc,detectivesTickets);
                 for(List<Map<Integer,ScotlandYard.Ticket>> possibleDetectivesLoc : allPossibleDetectivesLoc){ //对于一组可行的detetctives move
                     TreeNode node2 = new TreeNode(null,score,alpha,beta,mrXLoc,detectivesLoc,turnNum,useDouble,useSecret,mrXTickets,detectivesTickets);
                     node1.addChild(node2);

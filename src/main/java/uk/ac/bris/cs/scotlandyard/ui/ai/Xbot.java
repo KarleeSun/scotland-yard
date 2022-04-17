@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.atlassian.fugue.Pair;
 
@@ -26,6 +27,11 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 /*
     这个事情是这样的，其实不是给它每一轮的分数，是给一个几轮之后的分数（几轮就是depth）
     然后再倒着找 看导致这个最优结果的是哪一个move
+ */
+
+/*
+    问题：mrX能用secret和double时候moves里面没有
+    predictDetectives排列组合有问题
  */
 
 public class Xbot implements Ai {
@@ -111,11 +117,16 @@ public class Xbot implements Ai {
     }
 
     private Map<ScotlandYard.Ticket, Integer> getCurrentDetectiveTickets(@Nonnull Board board) {
+        detectivesTickets = new HashMap<>();
         for (Piece.Detective d : detectives) {
-            for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values())
-                mrXTickets.put(t, board.getPlayerTickets(d).get().getCount(t));
+            for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values()) {
+                if (!detectivesTickets.containsKey(t))
+                    detectivesTickets.put(t, board.getPlayerTickets(d).get().getCount(t));
+                if (detectivesTickets.containsKey(t))
+                    detectivesTickets.put(t, detectivesTickets.get(t) + board.getPlayerTickets(d).get().getCount(t));
+            }
         }
-        return mrXTickets;
+        return detectivesTickets;
     }
 
     //得到所有存着detectives的piece
@@ -198,51 +209,64 @@ public class Xbot implements Ai {
     //应该是对所有detectives能走的情况都处理，而不仅仅是处理最优情况
     //所以还要再重写这个函数
     //要么这个就返回二维数组 存所有可能的detectives的位置
-    public List<List<Map<Integer, ScotlandYard.Ticket>>> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc){
-        System.out.println("111111");
+    public List<List<Map<Integer, ScotlandYard.Ticket>>> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc,
+                                                                               Map<ScotlandYard.Ticket, Integer> detectivesTickets){
+        System.out.println("detectivesTTickets: "+detectivesTickets);
         detectives = getAllDetectives(board);
-        int detectivesNum = detectives.size(); //有几个detectives
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMoves = new ArrayList<>();
         List<Map<Integer,ScotlandYard.Ticket>> oneDetectiveMoves = new ArrayList<>();
         Map<Integer,ScotlandYard.Ticket> locWithTicket = new HashMap<>();
+        Map<ScotlandYard.Ticket,Integer> detectivesTicketsCopy = detectivesTickets;
         //然后每个detective都走到了距离-1的地方
         for(Integer dLoc: detectivesLoc){ //对于每一个detective
+            detectivesTicketsCopy = detectivesTickets;
             Dijkstra dj = new Dijkstra(mrXLoc, dLoc, board);
             int distance = dj.getDistance();
-            for (int d: board.getSetup().graph.adjacentNodes(dLoc)){
-                oneDetectiveMoves.clear();
+            for (int d: board.getSetup().graph.adjacentNodes(dLoc)) {
                 Dijkstra dk = new Dijkstra(mrXLoc, d, board);
-                if(!detectivesLoc.contains(d) && dk.getDistance() == distance-1){
-                    for(ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc,d,ImmutableSet.of())){
-                        if(detectivesTickets.get(t.requiredTicket()) >= 1){
-                            locWithTicket.put(d,t.requiredTicket());
-                            oneDetectiveMoves.add(locWithTicket);
+                if (!detectivesLoc.contains(d) && dk.getDistance() == distance - 1) {
+                    for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc, d, ImmutableSet.of())) {
+                        System.out.println("1, detectives Tickets:" + detectivesTickets);
+                        System.out.println("t.required ticket: "+ detectivesTicketsCopy.get(t.requiredTicket()));
+                        if (detectivesTicketsCopy.get(t.requiredTicket()) >= 1) {
+                            System.out.println("aaa");
+                            locWithTicket.put(d, t.requiredTicket());
+                            detectivesTicketsCopy.put(t.requiredTicket(),detectivesTicketsCopy.get(t.requiredTicket())-1);
+                            System.out.println("loc with ticket: "+locWithTicket);
+                            oneDetectiveMoves.add(Map.copyOf(locWithTicket));
+                            System.out.println("one d moves: "+ oneDetectiveMoves);
+                            locWithTicket.clear();
+                            System.out.println("one dd moves: "+oneDetectiveMoves);
                         }
                     }
                 }
-                allDetectiveMoves.add(oneDetectiveMoves);
             }
+            System.out.println("one detective moves: "+oneDetectiveMoves);
+            allDetectiveMoves.add(List.copyOf(oneDetectiveMoves));
+            System.out.println("0.all detectivemoves: "+allDetectiveMoves);
+            oneDetectiveMoves.clear();
         }
-        allDetectiveMoves.clear();
-        allDetectiveMoves.add(oneDetectiveMoves);
         System.out.println("allDetectiveMoves: "+allDetectiveMoves);
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMovesResult = new ArrayList<>();
-        List<Map<Integer, ScotlandYard.Ticket>> result = new ArrayList<>();
-        for(int k = 0; k< detectivesNum; k++){
-            int i,j;
-            for(i = 0; i< detectivesNum; i++){
-                for(j=0;j< allDetectiveMoves.get(i).size();j++){
-                    if (i<k) j++; //
-                    result.add(allDetectiveMoves.get(i).get(j));
-                    i++;
-                }
-                i=0;
-            }
-            allDetectiveMovesResult.add(result);
-        }
+        System.out.println("haha: "+ allDetectiveMoves.stream().toList());
+        allDetectiveMovesResult = Lists.cartesianProduct(allDetectiveMoves.stream().toList());
         System.out.println("allDetectiveMovesResult: "+allDetectiveMovesResult);
         return allDetectiveMovesResult;
     }
+
+//    private List<Map<Integer, ScotlandYard.Ticket>> descartes(List<Map<Integer, ScotlandYard.Ticket>>... lists) {
+//        List<Map<Integer, ScotlandYard.Ticket>> tempList = new ArrayList<>();
+//        for (List<Map<Integer, ScotlandYard.Ticket>> list : lists) {
+//            if (tempList.isEmpty()) {
+//                tempList = list;
+//            } else {
+//                //java8新特性，stream流
+//                tempList = tempList.stream().flatMap(item -> list.stream().map(item2 -> item + " " + item2)).collect(Collectors.toList());
+//            }
+//        }
+//        return tempList;
+//    }
+//}
 
     //就只给两种情况吧 踩上了或者轮数到了 或者moves是空的
     public Boolean hasWinner(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
@@ -271,10 +295,14 @@ public class Xbot implements Ai {
 
     //这个函数用来得到我想得到的全部信息
     public Map<String, Object> getMoveInformation(Move move){
-        Map<String,Object> moveInfoMap = move.accept(new Move.Visitor<Map<String,Object>>(){
-            Map<String, Object> moveInfo;
+        System.out.println("move: "+ move);
+        Minimax minimax = new Minimax();
+        Map<String,Object> moveInfo = move.accept(new Move.Visitor<Map<String,Object>>(){
+            Map<String, Object> moveInfo = new HashMap<>();
             @Override
             public Map<String,Object> visit(Move.SingleMove singleMove){
+                System.out.println("singleMove: "+ singleMove);
+//                System.out.println("moveInfo： "+moveInfo);
                 //moveInfo = Map.of()可以将多个元素一次性添加进去
                 moveInfo.put("isDoubleMove",false);
                 moveInfo.put("piece",singleMove.commencedBy());
@@ -283,10 +311,12 @@ public class Xbot implements Ai {
                 moveInfo.put("destination",singleMove.destination);
                 moveInfo.put("useSecret",false);
                 if(singleMove.ticket == ScotlandYard.Ticket.SECRET) moveInfo.put("useSecret",true);
+                System.out.println("Move info: "+moveInfo);
                 return moveInfo;
             }
             @Override
             public Map<String,Object> visit(Move.DoubleMove doubleMove){
+                System.out.println("doublemove: "+doubleMove);
                 moveInfo.put("isDoubleMove",true);
                 moveInfo.put("piece",doubleMove.commencedBy());
                 moveInfo.put("source",doubleMove.source());
@@ -300,7 +330,7 @@ public class Xbot implements Ai {
                 return moveInfo;
             }
         });
-        return null;
+        return moveInfo;
     }
 
     //把mrX现在所有的available moves和其对应分数存入一个map
