@@ -93,10 +93,12 @@ public class Xbot implements Ai {
 
         //get pieces of detectives
         List<Piece.Detective> detectives = getAllDetectives(board);
+        System.out.println(detectives);
         //get detectives locations and store them in a list
         List<Integer> detectiveLocations = new ArrayList<>();
         for (Piece.Detective detectivePiece : detectives) {
             detectiveLocations.add(board.getDetectiveLocation(detectivePiece).get());
+            System.out.println(detectivePiece + " " + board.getDetectiveLocation(detectivePiece).get());
         }
         return detectiveLocations;
     }
