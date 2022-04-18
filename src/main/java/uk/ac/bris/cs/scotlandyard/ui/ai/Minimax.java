@@ -121,7 +121,6 @@ public class Minimax {
                          Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
         System.out.println("here: " + detectivesTickets);
         System.out.println("mrXTickets: " + mrXTickets);
-        Xbot xbot = new Xbot();
         System.out.println("here1: " + detectivesTickets);
         TreeNode root = new TreeNode(null, score, MIN, MAX, mrXLoc, detectivesLoc, turnNum,
                 useDouble, useSecret, mrXTickets, detectivesTickets);
@@ -150,48 +149,48 @@ public class Minimax {
                 for (Move m : xbot.predictMrXMoves(board, mrX, mrXLoc, detectivesLoc, mrXTickets)) { //对于每一个mrX availablemove
                     System.out.println("1234567");
                     //用一个visitor pattern把singlemove和doublemove分开考虑
-                    TreeNode node1 = m.accept(new Move.Visitor<TreeNode>() {
+                    TreeNode mrXNode = m.accept(new Move.Visitor<TreeNode>() {
                         @Override
                         public TreeNode visit(Move.SingleMove singleMove) {
                             //在这里更新该更新的东西
                             System.out.println("7654321");
-                            TreeNode node1 = new TreeNode(singleMove, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
+                            TreeNode mrXNode = new TreeNode(singleMove, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
 
-                            System.out.println("node1: " + node1);
-                            node1.setParent(node);
+                            System.out.println("mrXNode: " + mrXNode);
+                            mrXNode.setParent(node);
                             System.out.println("a");
-                            node1.mrXTickets = node1.parent.mrXTickets;
+                            mrXNode.mrXTickets = mrXNode.parent.mrXTickets;
                             System.out.println("b");
-                            node1.turnNum += 1;
+                            mrXNode.turnNum += 1;
                             System.out.println("singleMOve here: " + singleMove);
                             System.out.println("getMoveInformation: " + xbot.getMoveInformation(singleMove));
-                            node1.mrXLoc = (int) xbot.getMoveInformation(singleMove).get("destination");
+                            mrXNode.mrXLoc = (int) xbot.getMoveInformation(singleMove).get("destination");
                             System.out.println("whywhy");
-                            System.out.println("node1: " + node1);
+                            System.out.println("mrXNode: " + mrXNode);
                             ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket) xbot.getMoveInformation(singleMove).get("ticket");
-                            node1.mrXTickets.put(usedTicket, node1.mrXTickets.get(usedTicket) - 1);
-                            if (usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
-                            Score score1 = new Score(mrXLoc,node1.mrXLoc,node1.detectivesLoc,false,node1.useSecret,node1.mrXTickets,node1.detectivesTickets,usedTicket);
-                            node1.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
-                            System.out.println("node1: " + node1);
-                            return node1;
+                            mrXNode.mrXTickets.put(usedTicket, mrXNode.mrXTickets.get(usedTicket) - 1);
+                            if (usedTicket == ScotlandYard.Ticket.SECRET) mrXNode.useSecret = true;
+                            Score score1 = new Score(mrXLoc,mrXNode.mrXLoc,mrXNode.detectivesLoc,false,mrXNode.useSecret,mrXNode.mrXTickets,mrXNode.detectivesTickets,usedTicket);
+                            mrXNode.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
+                            System.out.println("mrXNode: " + mrXNode);
+                            return mrXNode;
                         }
 
                         @Override
                         public TreeNode visit(Move.DoubleMove doubleMove) {
-                            TreeNode node1 = new TreeNode(doubleMove, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
-                            node1.turnNum += 2;
-                            node1.mrXLoc = (int) xbot.getMoveInformation(doubleMove).get("destination2");
+                            TreeNode mrXNode = new TreeNode(doubleMove, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
+                            mrXNode.turnNum += 2;
+                            mrXNode.mrXLoc = (int) xbot.getMoveInformation(doubleMove).get("destination2");
                             ScotlandYard.Ticket ticket1 = (ScotlandYard.Ticket) xbot.getMoveInformation(doubleMove).get("ticket1");
                             ScotlandYard.Ticket ticket2 = (ScotlandYard.Ticket) xbot.getMoveInformation(doubleMove).get("ticket2");
-                            node1.mrXTickets.put(ticket1, node1.mrXTickets.get(ticket1) - 1);
-                            node1.mrXTickets.put(ticket2, node1.mrXTickets.get(ticket2) - 1);
+                            mrXNode.mrXTickets.put(ticket1, mrXNode.mrXTickets.get(ticket1) - 1);
+                            mrXNode.mrXTickets.put(ticket2, mrXNode.mrXTickets.get(ticket2) - 1);
                             if (ticket1 == ScotlandYard.Ticket.SECRET || ticket2 == ScotlandYard.Ticket.SECRET)
-                                node1.useSecret = true;
-                            node1.useDouble = true;
-                            Score score1 = new Score(mrXLoc,node1.mrXLoc,node1.detectivesLoc, true,node1.useSecret,node1.mrXTickets,node1.detectivesTickets,ticket1);
-                            node1.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
-                            return node1;
+                                mrXNode.useSecret = true;
+                            mrXNode.useDouble = true;
+                            Score score1 = new Score(mrXLoc,mrXNode.mrXLoc,mrXNode.detectivesLoc, true,mrXNode.useSecret,mrXNode.mrXTickets,mrXNode.detectivesTickets,ticket1);
+                            mrXNode.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
+                            return mrXNode;
                         }
                     });
                     System.out.println("33333333");
@@ -200,29 +199,29 @@ public class Minimax {
                     Map<ScotlandYard.Ticket, Integer> mrXTicketsCopy = mrXTickets;
                     for (List<Map<Integer, ScotlandYard.Ticket>> possibleDetectivesLoc : allPossibleDetectivesLoc) { //对于一组可行的detetctives move
                         detectivesTicketsCopy = detectivesTickets;
-                        TreeNode node2 = new TreeNode(null, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTicketsCopy, detectivesTicketsCopy);
-                        node1.addChild(node2);
+                        TreeNode detectiveNode = new TreeNode(null, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTicketsCopy, detectivesTicketsCopy);
+                        mrXNode.addChild(detectiveNode);
                         System.out.println("444444");
                         List<Integer> dLocs = new ArrayList<>();
                         List<ScotlandYard.Ticket> usedTicketList = new ArrayList<>();
                         detectivesLoc.clear();
-                        node2.detectivesLoc.clear();
+                        detectiveNode.detectivesLoc.clear();
                         for (Map<Integer, ScotlandYard.Ticket> map1 : possibleDetectivesLoc) {
                             System.out.println("map1: " + map1);
                             dLocs.add(Map.copyOf(map1).keySet().stream().toList().get(0));
                             usedTicketList.add(Map.copyOf(map1).values().stream().toList().get(0));
                         }
-                        node2.detectivesLoc.addAll(dLocs);
-                        System.out.println("node2 detectivesLoc" + detectivesLoc);
+                        detectiveNode.detectivesLoc.addAll(dLocs);
+                        System.out.println("detectiveNode detectivesLoc" + detectivesLoc);
                         System.out.println("detectivesLoc: " + detectivesLoc);
                         for (ScotlandYard.Ticket t : usedTicketList) {
-                            node2.detectivesTickets.put(t, detectivesTickets.get(t) - 1);
-                            node2.mrXTickets.put(t, mrXTickets.get(t) + 1);
+                            detectiveNode.detectivesTickets.put(t, detectivesTickets.get(t) - 1);
+                            detectiveNode.mrXTickets.put(t, mrXTickets.get(t) + 1);
                         }
-                        Score score2 = new Score(node1.mrXLoc, node2.mrXLoc, node2.detectivesLoc, node1.useDouble,node1.useSecret,node2.mrXTickets,node2.detectivesTickets,null);
+                        Score score2 = new Score(mrXNode.mrXLoc, detectiveNode.mrXLoc, detectiveNode.detectivesLoc, mrXNode.useDouble,mrXNode.useSecret,detectiveNode.mrXTickets,detectiveNode.detectivesTickets,null);
                         System.out.println("5555555");
-//                        if (d < depth && !xbot.hasWinner(board, mrXLoc, node2.detectivesLoc) && !detectivesLoc.isEmpty()) {
-//                            createTree(board, node2, depth, score, alpha, beta, node1.mrXLoc, node2.detectivesLoc, turnNum, false, false, mrXTickets, detectivesTickets);
+//                        if (d < depth && !xbot.hasWinner(board, mrXLoc, detectiveNode.detectivesLoc) && !detectivesLoc.isEmpty()) {
+//                            createTree(board, detectiveNode, depth, score, alpha, beta, mrXNode.mrXLoc, detectiveNode.detectivesLoc, turnNum, false, false, mrXTickets, detectivesTickets);
 //                        }
                     }
                 }
