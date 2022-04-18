@@ -6,7 +6,6 @@ import uk.ac.bris.cs.scotlandyard.model.Piece;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
 import javax.annotation.Nonnull;
-import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -174,6 +173,7 @@ public class Minimax {
                             if (usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
                             Score score1 = new Score(mrXLoc,node1.mrXLoc,node1.detectivesLoc,false,node1.useSecret,node1.mrXTickets,node1.detectivesTickets,usedTicket);
                             node1.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
+                            System.out.println("score1.giveScore: "+score1.giveScore(board,turnNum,mrXLoc,detectivesLoc));
                             System.out.println("node1: " + node1);
                             return node1;
                         }
@@ -182,7 +182,7 @@ public class Minimax {
                         public TreeNode visit(Move.DoubleMove doubleMove) {
                             TreeNode node1 = new TreeNode(doubleMove, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
                             node1.turnNum += 2;
-                            node1.mrXLoc = (int) xbot.getMoveInformation(doubleMove).get("destination2");
+                            node1.mrXLoc = (int) xbot.getMoveInformation(doubleMove).get("destination");
                             ScotlandYard.Ticket ticket1 = (ScotlandYard.Ticket) xbot.getMoveInformation(doubleMove).get("ticket1");
                             ScotlandYard.Ticket ticket2 = (ScotlandYard.Ticket) xbot.getMoveInformation(doubleMove).get("ticket2");
                             node1.mrXTickets.put(ticket1, node1.mrXTickets.get(ticket1) - 1);
@@ -192,6 +192,7 @@ public class Minimax {
                             node1.useDouble = true;
                             Score score1 = new Score(mrXLoc,node1.mrXLoc,node1.detectivesLoc, true,node1.useSecret,node1.mrXTickets,node1.detectivesTickets,ticket1);
                             node1.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
+                            System.out.println("node1.score: "+node1.score);
                             return node1;
                         }
                     });
@@ -222,6 +223,7 @@ public class Minimax {
                         }
                         Score score2 = new Score(node1.mrXLoc, node2.mrXLoc, node2.detectivesLoc, node1.useDouble,node1.useSecret,node2.mrXTickets,node2.detectivesTickets,null);
                         System.out.println("5555555");
+                        System.out.println("node2 score: "+node2.score);
 //                        if (d < depth && !xbot.hasWinner(board, mrXLoc, node2.detectivesLoc) && !detectivesLoc.isEmpty()) {
 //                            createTree(board, node2, depth, score, alpha, beta, node1.mrXLoc, node2.detectivesLoc, turnNum, false, false, mrXTickets, detectivesTickets);
 //                        }

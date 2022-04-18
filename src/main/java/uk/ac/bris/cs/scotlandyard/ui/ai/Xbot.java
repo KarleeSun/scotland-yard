@@ -69,9 +69,17 @@ public class Xbot implements Ai {
         System.out.println("mrXTickets: "+mrXTickets);
         Minimax.TreeNode root = minimax.tree(board,null,0,1,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
         int bestScore =  minimax.miniMaxAlphaBeta(root,1,false,minimax.MIN,minimax.MAX).getScore();
+        Set<Move> moves = new HashSet<>();
+        moves.addAll(board.getAvailableMoves());
+        Set<Move> okayMoves = new HashSet<>();
+        for(Move m: moves){
+            Dijkstra dijkstra = new Dijkstra((Integer) getMoveInformation(m).get("destination"),board.getDetectiveLocation(detectives),board);
+            if(dijkstra.getDetectivesDistance().get(0) > 1) okayMoves.add(m);
+        }
         for(Minimax.TreeNode node : root.getChildren()){
             if(node.getAlpha() == bestScore)
-                return node.getMove();
+                if(okayMoves.contains(node.getMove())) return node.getMove();
+            else return okayMoves.stream().toList().get(new Random().nextInt(okayMoves.size()));
         }
         return null;
     }
@@ -223,7 +231,7 @@ public class Xbot implements Ai {
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMoves = new ArrayList<>();
         List<Map<Integer,ScotlandYard.Ticket>> oneDetectiveMoves = new ArrayList<>();
         Map<Integer,ScotlandYard.Ticket> locWithTicket = new HashMap<>();
-        Map<ScotlandYard.Ticket,Integer> detectivesTicketsCopy = detectivesTickets;
+        Map<ScotlandYard.Ticket,Integer> detectivesTicketsCopy;
         //然后每个detective都走到了距离-1的地方
         for(Integer dLoc: detectivesLocCopy){ //对于每一个detective
             Dijkstra dj = new Dijkstra(mrXLoc, dLoc, board);
@@ -336,7 +344,7 @@ public class Xbot implements Ai {
                 moveInfo.put("ticket1",doubleMove.ticket1);
                 moveInfo.put("destination1",doubleMove.destination1);
                 moveInfo.put("ticket2",doubleMove.ticket2);
-                moveInfo.put("destination2",doubleMove.destination2);
+                moveInfo.put("destination",doubleMove.destination2);
                 moveInfo.put("useSecret",false);
                 if(doubleMove.ticket1 == ScotlandYard.Ticket.SECRET || doubleMove.ticket2 == ScotlandYard.Ticket.SECRET)
                     moveInfo.put("useSecret",true);
