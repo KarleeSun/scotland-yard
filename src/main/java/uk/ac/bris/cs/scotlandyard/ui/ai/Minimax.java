@@ -71,7 +71,7 @@ public class Minimax {
         }
 
         public void addChild(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
-                              Boolean useDouble, Boolean useSecret) {
+                             Boolean useDouble, Boolean useSecret) {
             TreeNode child = new TreeNode(move, score, alpha, beta, mrXLoc, detectivesLoc, turnNum,
                     useDouble, useSecret, mrXTickets, detectivesTickets);
             this.children.add(child);
@@ -87,15 +87,15 @@ public class Minimax {
             return move;
         }
 
-        public int getScore(){
+        public int getScore() {
             return score;
         }
 
-        public int getBeta(){
+        public int getBeta() {
             return beta;
         }
 
-        public int getAlpha(){
+        public int getAlpha() {
             return alpha;
         }
 
@@ -157,6 +157,7 @@ public class Minimax {
                             //在这里更新该更新的东西
                             System.out.println("7654321");
                             TreeNode node1 = new TreeNode(singleMove, score, alpha, beta, mrXLoc, detectivesLoc, turnNum, useDouble, useSecret, mrXTickets, detectivesTickets);
+
                             System.out.println("node1: " + node1);
                             node1.setParent(node);
                             System.out.println("a");
@@ -171,6 +172,8 @@ public class Minimax {
                             ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket) xbot.getMoveInformation(singleMove).get("ticket");
                             node1.mrXTickets.put(usedTicket, node1.mrXTickets.get(usedTicket) - 1);
                             if (usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
+                            Score score1 = new Score(node1.mrXLoc,node1.);
+                            node1.score =
                             System.out.println("node1: " + node1);
                             return node1;
                         }
@@ -269,6 +272,4 @@ public class Minimax {
         return bestScoreNode;
     }
 
-
 }
-

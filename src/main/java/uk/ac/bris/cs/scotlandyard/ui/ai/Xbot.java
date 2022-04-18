@@ -67,8 +67,8 @@ public class Xbot implements Ai {
         Minimax minimax = new Minimax();
         setUp(board); //在这setup了，可是在这外面，这个class里没有set
         System.out.println("mrXTickets: "+mrXTickets);
-        Minimax.TreeNode root = minimax.tree(board,null,0,2,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
-        int bestScore =  minimax.miniMaxAlphaBeta(root,2,false,minimax.MIN,minimax.MAX).getScore();
+        Minimax.TreeNode root = minimax.tree(board,null,0,1,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
+        int bestScore =  minimax.miniMaxAlphaBeta(root,1,false,minimax.MIN,minimax.MAX).getScore();
         for(Minimax.TreeNode node : root.getChildren()){
             if(node.getAlpha() == bestScore)
                 return node.getMove();

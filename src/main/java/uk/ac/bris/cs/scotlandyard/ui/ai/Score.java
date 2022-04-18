@@ -20,7 +20,7 @@ import java.util.Set;
  */
 
 public class Score {
-    private int source; //还不对，检查
+//    private int source; //还不对，检查
     private int mrXLoc;
     private List<Integer> detectivesLoc;
     private ScotlandYard.Ticket usedTicket;
@@ -29,9 +29,9 @@ public class Score {
 
     //一个普通的构造函数
     //所有算分数需要用的东西都在这个地方传进来
-    public Score(int source, int mrXLoc, ScotlandYard.Ticket usedTicket, List<Integer> detectivesLoc,
+    public Score(int mrXLoc, ScotlandYard.Ticket usedTicket, List<Integer> detectivesLoc,
                  Boolean useDouble, Boolean useSecret) {
-        this.source = source;
+//        this.source = source;
         this.mrXLoc = mrXLoc;
         this.detectivesLoc = detectivesLoc;
         this.usedTicket = usedTicket;
@@ -51,17 +51,19 @@ public class Score {
          */
     //得到分数就用这个函数
     public int giveScore(@Nonnull Board board, int turnNum){
+        Xbot xbot = new Xbot();
         int score = 0;
         if(board.getSetup().moves.get(turnNum+1)) { //当处于reveal的前一轮
-            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
+            score = distanceScore(board, mrXLoc,detectivesLoc)*10 + transportationScore(board, source)
                     + guessPossibilityScore(board, source, usedTicket); //还没设置参数
         } else if(board.getSetup().moves.get(turnNum-1)) {//当处于reveal的后一轮
-            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
+            score = distanceScore(board, mrXLoc,detectivesLoc)*10 + transportationScore(board, source)
                     + guessPossibilityScore(board, source, usedTicket); //还没设置参数
         } else { //普通情况
-            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
+            score = distanceScore(board, mrXLoc,detectivesLoc)*8 + transportationScore(board, source)
                     + guessPossibilityScore(board, source, usedTicket); //还没设置参数
         }
+        System.out.println("score: "+score);
         return score;
     }
 
