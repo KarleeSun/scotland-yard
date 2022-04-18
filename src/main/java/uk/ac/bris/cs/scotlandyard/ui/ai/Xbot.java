@@ -67,8 +67,8 @@ public class Xbot implements Ai {
         Minimax minimax = new Minimax();
         setUp(board); //在这setup了，可是在这外面，这个class里没有set
         System.out.println("mrXTickets: "+mrXTickets);
-        Minimax.TreeNode node = minimax.tree(board,null,0,3,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
-        return minimax.miniMaxAlphaBeta(node,3,false,minimax.MIN,minimax.MAX).move;
+        Minimax.TreeNode node = minimax.tree(board,null,0,2,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
+        return minimax.miniMaxAlphaBeta(node,2,false,minimax.MIN,minimax.MAX).move;
     }
 
     //=========================================================================================
@@ -211,21 +211,23 @@ public class Xbot implements Ai {
     //要么这个就返回二维数组 存所有可能的detectives的位置
     public List<List<Map<Integer, ScotlandYard.Ticket>>> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc,
                                                                                Map<ScotlandYard.Ticket, Integer> detectivesTickets){
+        int detectivesNum = detectivesLoc.size();
         System.out.println("detectivesTTickets: "+detectivesTickets);
         detectives = getAllDetectives(board);
+        List<Integer> detectivesLocCopy = detectivesLoc;
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMoves = new ArrayList<>();
         List<Map<Integer,ScotlandYard.Ticket>> oneDetectiveMoves = new ArrayList<>();
         Map<Integer,ScotlandYard.Ticket> locWithTicket = new HashMap<>();
         Map<ScotlandYard.Ticket,Integer> detectivesTicketsCopy = detectivesTickets;
         //然后每个detective都走到了距离-1的地方
-        for(Integer dLoc: detectivesLoc){ //对于每一个detective
-            detectivesTicketsCopy = detectivesTickets;
+        for(Integer dLoc: detectivesLocCopy){ //对于每一个detective
             Dijkstra dj = new Dijkstra(mrXLoc, dLoc, board);
             int distance = dj.getDistance();
             for (int d: board.getSetup().graph.adjacentNodes(dLoc)) {
                 Dijkstra dk = new Dijkstra(mrXLoc, d, board);
                 if (!detectivesLoc.contains(d) && dk.getDistance() == distance - 1) {
                     for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc, d, ImmutableSet.of())) {
+                        detectivesTicketsCopy = detectivesTickets;
                         System.out.println("1, detectives Tickets:" + detectivesTickets);
                         System.out.println("t.required ticket: "+ detectivesTicketsCopy.get(t.requiredTicket()));
                         if (detectivesTicketsCopy.get(t.requiredTicket()) >= 1) {
@@ -243,9 +245,15 @@ public class Xbot implements Ai {
             }
             System.out.println("one detective moves: "+oneDetectiveMoves);
             allDetectiveMoves.add(List.copyOf(oneDetectiveMoves));
+            allDetectiveMoves.removeIf(m -> m.isEmpty());
             System.out.println("0.all detectivemoves: "+allDetectiveMoves);
             oneDetectiveMoves.clear();
+            detectivesNum --;
+            System.out.println("number: "+detectivesNum);
+            if(detectivesNum<=0) break;
+
         }
+        System.out.println("11detectives loc:"+detectivesLoc);
         System.out.println("allDetectiveMoves: "+allDetectiveMoves);
         List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMovesResult = new ArrayList<>();
         System.out.println("haha: "+ allDetectiveMoves.stream().toList());
