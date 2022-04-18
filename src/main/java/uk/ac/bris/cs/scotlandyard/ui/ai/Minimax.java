@@ -234,6 +234,7 @@ public class Minimax {
 
     //最终把最好的move传给root存到root的move里
     public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta) {
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!node : " + node.getMove());
         if (node.children.isEmpty()) {
             return node;
         }
@@ -250,9 +251,12 @@ public class Minimax {
                 }
                 alpha = Math.max(alpha, bestScoreNode.score);
                 node.alpha = alpha;
+                System.out.println("alpha: " + node.getAlpha());
+                System.out.println("beta: " + node.getBeta());
+                System.out.println("score: " + node.getScore());
                 if (beta <= alpha)
                     break;
-                System.out.println("best move: " + bestScoreNode.move);
+                System.out.println("best move: " + bestScoreNode.getMove());
             }
             return bestScoreNode;
         } else {
@@ -267,9 +271,13 @@ public class Minimax {
                 }
                 beta = Math.min(beta, bestScoreNode.score);
                 node.beta = beta;
+                System.out.println("alpha: " + node.getAlpha());
+                System.out.println("beta: " + node.getBeta());
+                System.out.println("score: " + node.getScore());
+
                 if (beta <= alpha)
                     break;
-                System.out.println("best move: " + bestScoreNode.move);
+                System.out.println("best move: " + bestScoreNode.getMove());
             }
         }
         return bestScoreNode;

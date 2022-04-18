@@ -66,10 +66,10 @@ public class Dijkstra {
             ticketsCount[2] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.UNDERGROUND);
         }
         return switch (t.toString()) {
-            case "TAXI" -> 100 / ticketsCount[0];
-            case "BUS" -> 100 / ticketsCount[1];
-            case "UNDERGROUND" -> 100 / ticketsCount[2];
-            default -> MAX;
+//            case "TAXI" -> 100 / ticketsCount[0];
+//            case "BUS" -> 100 / ticketsCount[1];
+//            case "UNDERGROUND" -> 100 / ticketsCount[2];
+            default -> 1;
         };
     }
 
