@@ -31,8 +31,10 @@ public class Minimax {
     //对于每一个结点他就存了这些值，可以设置成如果不传入就是默认，或者就传入吧也累不死
     //刚开始创建这个node时候就可以传初始值，然后在node里面计算时候按需更改
     public class TreeNode {
-        public Move move;
+        private Move move;
         private int score;
+        private int alpha;
+        private int beta;
         private TreeNode parent;
         private List<TreeNode> children;
         private int mrXLoc;
@@ -49,6 +51,8 @@ public class Minimax {
                         Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
             this.move = move;
             this.score = score;
+            this.alpha = MIN;
+            this.beta = MAX;
             this.children = new ArrayList<>();
 //            this.source = source; //移动前的位置 不需要其实，因为他的出发位置就是他爹的到达位置
             this.mrXLoc = mrXLoc; //移动后mrX的位置
@@ -61,12 +65,12 @@ public class Minimax {
 //            this.parent = new TreeNode(null,0,MIN,MAX,0,null,0,false,false,null,null);
         }
 
-        private void addChild(TreeNode child) {
+        public void addChild(TreeNode child) {
             this.children.add(child);
             if (child.parent == null) child.setParent(this);
         }
 
-        private void addChild(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
+        public void addChild(Move move, int score, int alpha, int beta, int mrXLoc, List<Integer> detectivesLoc,
                               Boolean useDouble, Boolean useSecret) {
             TreeNode child = new TreeNode(move, score, alpha, beta, mrXLoc, detectivesLoc, turnNum,
                     useDouble, useSecret, mrXTickets, detectivesTickets);
@@ -74,20 +78,32 @@ public class Minimax {
             if (!child.parent.equals(this)) child.setParent(this);
         }
 
-        private void setParent(TreeNode parent) {
+        public void setParent(TreeNode parent) {
             this.parent = parent;
             if (!parent.children.contains(this)) parent.addChild(this);
         }
 
-        private Move getMove() {
+        public Move getMove() {
             return move;
         }
 
-        private TreeNode getParent() {
+        public int getScore(){
+            return score;
+        }
+
+        public int getBeta(){
+            return beta;
+        }
+
+        public int getAlpha(){
+            return alpha;
+        }
+
+        public TreeNode getParent() {
             return parent;
         }
 
-        private List<TreeNode> getChildren() {
+        public List<TreeNode> getChildren() {
             return children;
         }
 
@@ -216,32 +232,43 @@ public class Minimax {
             return node;
         }
         TreeNode bestScoreNode = node;
-        int size = node.parent == null ? 1 : node.parent.children.size();
         if (maximizing) {
             bestScoreNode.score = MIN;
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < node.children.size(); i++) {
+                System.out.println("size: " + node.children.size());
+                System.out.println("i: " + i);
+                System.out.println("children: " + node.children.get(i));
                 TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, false, alpha, beta);
                 if (bestScoreNode.score <= scoreNode.score) {
                     bestScoreNode = scoreNode;
                 }
                 alpha = Math.max(alpha, bestScoreNode.score);
+                node.alpha = alpha;
                 if (beta <= alpha)
                     break;
+                System.out.println("best move: " + bestScoreNode.move);
             }
             return bestScoreNode;
         } else {
             bestScoreNode.score = MAX;
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < node.children.size(); i++) {
+                System.out.println("size: " + node.children.size());
+                System.out.println("i: " + i);
+                System.out.println("children: " + node.children.get(i));
                 TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, true, alpha, beta);
                 if (bestScoreNode.score >= scoreNode.score) {
                     bestScoreNode = scoreNode;
                 }
                 beta = Math.min(beta, bestScoreNode.score);
+                node.beta = beta;
                 if (beta <= alpha)
                     break;
+                System.out.println("best move: " + bestScoreNode.move);
             }
         }
         return bestScoreNode;
     }
+
+
 }
 
