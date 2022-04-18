@@ -5,9 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
 import javax.annotation.Nonnull;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /*
@@ -20,49 +18,56 @@ import java.util.Set;
  */
 
 public class Score {
-//    private int source; //还不对，检查
+    private int source;
     private int mrXLoc;
     private List<Integer> detectivesLoc;
-    private ScotlandYard.Ticket usedTicket;
-    private Boolean useDouble;
+    private Boolean useDouble; //用没用double卡（singlemove or doublemove）
     private Boolean useSecret;
+    private Map<ScotlandYard.Ticket, Integer> mrXTickets;
+    private Map<ScotlandYard.Ticket, Integer> detectivesTickets;
+    private ScotlandYard.Ticket usedTicket;
 
     //一个普通的构造函数
     //所有算分数需要用的东西都在这个地方传进来
-    public Score(int mrXLoc, ScotlandYard.Ticket usedTicket, List<Integer> detectivesLoc,
-                 Boolean useDouble, Boolean useSecret) {
-//        this.source = source;
+
+
+    public Score(int source, int mrXLoc, List<Integer> detectivesLoc, Boolean useDouble, Boolean useSecret,
+                 Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets,
+                 ScotlandYard.Ticket usedTicket) {
+        this.source = source;
         this.mrXLoc = mrXLoc;
         this.detectivesLoc = detectivesLoc;
-        this.usedTicket = usedTicket;
         this.useDouble = useDouble;
         this.useSecret = useSecret;
+        this.mrXTickets = mrXTickets;
+        this.detectivesTickets = detectivesTickets;
+        this.usedTicket = usedTicket;
     }
 
     /*
-            当reveal前一轮和后一轮时候改变权重
-            reveal前一轮 能到的点评分权重增加
-            reveal后一轮是交通方式 或者用secret卡
-            判断离reveal的轮数
-            考虑用不用设置位置分数和卡分数
-            对secret和double卡的设置 当reveal前一轮secret卡评分降低 后一轮增加
-            double卡当detectives离mrX距离很近时使用得分增加
-            对于单次的move 其实是同一套评分系统 detectives想办法让mrX分更低
-         */
+                当reveal前一轮和后一轮时候改变权重
+                reveal前一轮 能到的点评分权重增加
+                reveal后一轮是交通方式 或者用secret卡
+                判断离reveal的轮数
+                考虑用不用设置位置分数和卡分数
+                对secret和double卡的设置 当reveal前一轮secret卡评分降低 后一轮增加
+                double卡当detectives离mrX距离很近时使用得分增加
+                对于单次的move 其实是同一套评分系统 detectives想办法让mrX分更低
+             */
     //得到分数就用这个函数
-    public int giveScore(@Nonnull Board board, int turnNum){
+    public int giveScore(@Nonnull Board board, int turnNum, int mrXLoc, List<Integer> detectivesLoc){
         Xbot xbot = new Xbot();
         int score = 0;
-        if(board.getSetup().moves.get(turnNum+1)) { //当处于reveal的前一轮
-            score = distanceScore(board, mrXLoc,detectivesLoc)*10 + transportationScore(board, source)
+//        if(board.getSetup().moves.get(turnNum+1)) { //当处于reveal的前一轮
+//            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
+//                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
+//        } else if(board.getSetup().moves.get(turnNum-1)) {//当处于reveal的后一轮
+//            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
+//                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
+//        } else { //普通情况
+            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
                     + guessPossibilityScore(board, source, usedTicket); //还没设置参数
-        } else if(board.getSetup().moves.get(turnNum-1)) {//当处于reveal的后一轮
-            score = distanceScore(board, mrXLoc,detectivesLoc)*10 + transportationScore(board, source)
-                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
-        } else { //普通情况
-            score = distanceScore(board, mrXLoc,detectivesLoc)*8 + transportationScore(board, source)
-                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
-        }
+//        }
         System.out.println("score: "+score);
         return score;
     }
@@ -73,11 +78,17 @@ public class Score {
         //用一下Dijkstra
         Dijkstra dk = new Dijkstra(mrXLoc,detectivesLoc,board);
         List<Integer> distance = dk.getDetectivesDistance();
+        List<Integer> edgeList = new ArrayList<Integer>(Arrays.asList(1,4,7,92,175,56));
+        Dijkstra dk1 = new Dijkstra(mrXLoc,edgeList,board);
         //加权算一下
         int distanceScore = 0;
         for(Integer d: distance){
             distanceScore += d;
             distanceScore *= 4; //这个数不合适的话后期可以改
+        }
+        for(Integer d1 : dk1.getDetectivesDistance()){
+            distanceScore += d1;
+            if (d1<5) distanceScore -= 20;
         }
         distanceScore /= (Math.pow(4,distance.size()));
         //测试用

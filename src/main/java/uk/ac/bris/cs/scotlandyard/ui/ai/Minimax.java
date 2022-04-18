@@ -172,8 +172,8 @@ public class Minimax {
                             ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket) xbot.getMoveInformation(singleMove).get("ticket");
                             node1.mrXTickets.put(usedTicket, node1.mrXTickets.get(usedTicket) - 1);
                             if (usedTicket == ScotlandYard.Ticket.SECRET) node1.useSecret = true;
-                            Score score1 = new Score(node1.mrXLoc,node1.);
-                            node1.score =
+                            Score score1 = new Score(mrXLoc,node1.mrXLoc,node1.detectivesLoc,false,node1.useSecret,node1.mrXTickets,node1.detectivesTickets,usedTicket);
+                            node1.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
                             System.out.println("node1: " + node1);
                             return node1;
                         }
@@ -190,6 +190,8 @@ public class Minimax {
                             if (ticket1 == ScotlandYard.Ticket.SECRET || ticket2 == ScotlandYard.Ticket.SECRET)
                                 node1.useSecret = true;
                             node1.useDouble = true;
+                            Score score1 = new Score(mrXLoc,node1.mrXLoc,node1.detectivesLoc, true,node1.useSecret,node1.mrXTickets,node1.detectivesTickets,ticket1);
+                            node1.score = score1.giveScore(board,turnNum, mrXLoc,detectivesLoc);
                             return node1;
                         }
                     });
@@ -218,10 +220,11 @@ public class Minimax {
                             node2.detectivesTickets.put(t, detectivesTickets.get(t) - 1);
                             node2.mrXTickets.put(t, mrXTickets.get(t) + 1);
                         }
+                        Score score2 = new Score(node1.mrXLoc, node2.mrXLoc, node2.detectivesLoc, node1.useDouble,node1.useSecret,node2.mrXTickets,node2.detectivesTickets,null);
                         System.out.println("5555555");
-                        if (d < depth && !xbot.hasWinner(board, mrXLoc, node2.detectivesLoc) && !detectivesLoc.isEmpty()) {
-                            createTree(board, node2, depth, score, alpha, beta, node1.mrXLoc, node2.detectivesLoc, turnNum, false, false, mrXTickets, detectivesTickets);
-                        }
+//                        if (d < depth && !xbot.hasWinner(board, mrXLoc, node2.detectivesLoc) && !detectivesLoc.isEmpty()) {
+//                            createTree(board, node2, depth, score, alpha, beta, node1.mrXLoc, node2.detectivesLoc, turnNum, false, false, mrXTickets, detectivesTickets);
+//                        }
                     }
                 }
                 d--;
