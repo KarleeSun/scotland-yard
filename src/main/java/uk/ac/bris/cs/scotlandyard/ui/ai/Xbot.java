@@ -64,6 +64,8 @@ public class Xbot implements Ai {
     @Nonnull
     @Override
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
+        List<Integer> edgePoint = new ArrayList<>(Arrays.asList(1,2,3,4,5,6,7,8,18,43,57,73,92,93,94,95,122,121,120,144,
+                177,176,189,190,192,199,200,175,162,136,119,107,91,56,42,30,17));
         Minimax minimax = new Minimax();
         setUp(board); //在这setup了，可是在这外面，这个class里没有set
         System.out.println("mrXTickets: "+mrXTickets);
@@ -72,9 +74,14 @@ public class Xbot implements Ai {
         Set<Move> moves = new HashSet<>();
         moves.addAll(board.getAvailableMoves());
         Set<Move> okayMoves = new HashSet<>();
+        Boolean distanceOkay = false;
         for(Move m: moves){
-            Dijkstra dijkstra = new Dijkstra((Integer) getMoveInformation(m).get("destination"),board.getDetectiveLocation(detectives),board);
-            if(dijkstra.getDetectivesDistance().get(0) > 1) okayMoves.add(m);
+            Dijkstra dijkstra = new Dijkstra((Integer) getMoveInformation(m).get("destination"),getCurrentDetectivesLoc(board),board);
+            if(dijkstra.getDetectivesDistance().get(0) > 1) distanceOkay = true;
+            for(Integer p : edgePoint){
+                Dijkstra d = new Dijkstra((Integer) getMoveInformation(m).get("destination"),p,board);
+                if(d.getDetectivesDistance().get(0) > 1 && distanceOkay) okayMoves.add(m);
+            }
         }
         for(Minimax.TreeNode node : root.getChildren()){
             if(node.getAlpha() == bestScore)
