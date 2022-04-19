@@ -74,6 +74,7 @@ public class Score {
 
     //score about the distance
     //就是这个函数 source和location很混乱 写完xbot再回来看这个
+    //距离和剩下的票分开算
     private int distanceScore(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
         //用一下Dijkstra
         Dijkstra dk = new Dijkstra(mrXLoc,detectivesLoc,board);

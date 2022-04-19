@@ -1,9 +1,7 @@
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
-import uk.ac.bris.cs.scotlandyard.model.Board;
-import uk.ac.bris.cs.scotlandyard.model.Move;
-import uk.ac.bris.cs.scotlandyard.model.Piece;
-import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
+import com.google.common.collect.ImmutableList;
+import uk.ac.bris.cs.scotlandyard.model.*;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -137,13 +135,13 @@ public class Minimax {
     private void createTree(@Nonnull Board board, TreeNode node, int depth, int score, int alpha, int beta, int mrXLoc,
                             List<Integer> detectivesLoc, int turnNum, Boolean useDouble, Boolean useSecret,
                             Map<ScotlandYard.Ticket, Integer> mrXTickets, Map<ScotlandYard.Ticket, Integer> detectivesTickets) {
-        if (d < depth && detectivesTickets.values().stream().filter(m -> m < 0).toList().isEmpty()) {
+        if (d < depth && detectivesTickets.values().stream().filter(m -> m < 0).toList().isEmpty()) { //这写到predictDetectivemove里面
             Xbot xbot = new Xbot();
             System.out.println("depth d: " + d);
             System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
             System.out.println("creatTree: " + mrXTickets);
             System.out.println("hasWinner: " + !xbot.hasWinner(board, mrXLoc, detectivesLoc));
-            if (!xbot.hasWinner(board, mrXLoc, detectivesLoc) && d < depth) { //如果游戏没有结束
+            if (!xbot.hasWinner(board, mrXLoc, detectivesLoc) && d < depth) { //如果游戏没有结束 //
                 System.out.println("00000000");
                 d++;
                 for (Move m : xbot.predictMrXMoves(board, mrX, mrXLoc, detectivesLoc, mrXTickets)) { //对于每一个mrX availablemove
@@ -167,8 +165,8 @@ public class Minimax {
                             ScotlandYard.Ticket usedTicket = (ScotlandYard.Ticket) xbot.getMoveInformation(singleMove).get("ticket");
                             mrXNode.mrXTickets.put(usedTicket, mrXNode.mrXTickets.get(usedTicket) - 1);
                             if (usedTicket == ScotlandYard.Ticket.SECRET) mrXNode.useSecret = true;
-                            Score score1 = new Score(source,mrXNode.mrXLoc,mrXNode.detectivesLoc,false,mrXNode.useSecret,mrXNode.mrXTickets,mrXNode.detectivesTickets,usedTicket);
-                            mrXNode.score = score1.giveScore(board,mrXNode.turnNum, mrXNode.mrXLoc,mrXNode.detectivesLoc);
+                            Score score1 = new Score(source, mrXNode.mrXLoc, mrXNode.detectivesLoc, false, mrXNode.useSecret, mrXNode.mrXTickets, mrXNode.detectivesTickets, usedTicket);
+                            mrXNode.score = score1.giveScore(board, mrXNode.turnNum, mrXNode.mrXLoc, mrXNode.detectivesLoc);
                             System.out.println("mrXNode: " + mrXNode);
                             return mrXNode;
                         }
@@ -186,8 +184,8 @@ public class Minimax {
                             if (ticket1 == ScotlandYard.Ticket.SECRET || ticket2 == ScotlandYard.Ticket.SECRET)
                                 mrXNode.useSecret = true;
                             mrXNode.useDouble = true;
-                            Score score1 = new Score(source,mrXNode.mrXLoc,mrXNode.detectivesLoc, true,mrXNode.useSecret,mrXNode.mrXTickets,mrXNode.detectivesTickets,ticket2);
-                            mrXNode.score = score1.giveScore(board,mrXNode.turnNum, mrXNode.mrXLoc,mrXNode.detectivesLoc);
+                            Score score1 = new Score(source, mrXNode.mrXLoc, mrXNode.detectivesLoc, true, mrXNode.useSecret, mrXNode.mrXTickets, mrXNode.detectivesTickets, ticket2);
+                            mrXNode.score = score1.giveScore(board, mrXNode.turnNum, mrXNode.mrXLoc, mrXNode.detectivesLoc);
                             return mrXNode;
                         }
                     });
@@ -207,14 +205,14 @@ public class Minimax {
                             usedTicketList.add(Map.copyOf(map1).values().stream().toList().get(0));
                         }
                         detectiveNode.detectivesLoc.clear();
-                        detectiveNode.detectivesLoc.addAll(dLocs);
+                        detectiveNode.detectivesLoc.addAll(dLocs); //这里就把它改了 然后弄一个老位置
                         System.out.println("detectiveNode detectivesLoc" + detectivesLoc);
                         System.out.println("detectivesLoc: " + detectivesLoc);
-                        for (ScotlandYard.Ticket t : usedTicketList) {
+                        for (ScotlandYard.Ticket t : usedTicketList) { //回一下以前的票
                             detectiveNode.detectivesTickets.put(t, detectivesTickets.get(t) - 1);
                             detectiveNode.mrXTickets.put(t, mrXTickets.get(t) + 1);
                         }
-                        Score score2 = new Score(detectiveNode.mrXLoc, detectiveNode.mrXLoc, detectiveNode.detectivesLoc, detectiveNode.useDouble,detectiveNode.useSecret,detectiveNode.mrXTickets,detectiveNode.detectivesTickets,null);
+                        Score score2 = new Score(detectiveNode.mrXLoc, detectiveNode.mrXLoc, detectiveNode.detectivesLoc, detectiveNode.useDouble, detectiveNode.useSecret, detectiveNode.mrXTickets, detectiveNode.detectivesTickets, null);
                         detectiveNode.score = score2.giveScore(board, detectiveNode.turnNum, detectiveNode.mrXLoc, detectiveNode.detectivesLoc);
                         System.out.println("5555555");
 //                        if (d < depth && !xbot.hasWinner(board, mrXLoc, detectiveNode.detectivesLoc) && !detectivesLoc.isEmpty()) {
@@ -276,6 +274,16 @@ public class Minimax {
             }
         }
         return bestScoreNode;
+    }
+
+    public class GameData {
+        final Player mrX;
+        final ImmutableList<Player> detectives;
+
+        public GameData(Player mrX, List<Player> detectives) {
+            this.mrX = mrX;
+            this.detectives = ImmutableList.copyOf(detectives);
+        }
     }
 
 }
