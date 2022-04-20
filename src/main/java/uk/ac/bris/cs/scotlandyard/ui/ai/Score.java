@@ -44,18 +44,20 @@ public class Score {
         this.usedTicket = usedTicket;
     }
 
+    public Score() { }
+
     /*
-                当reveal前一轮和后一轮时候改变权重
-                reveal前一轮 能到的点评分权重增加
-                reveal后一轮是交通方式 或者用secret卡
-                判断离reveal的轮数
-                考虑用不用设置位置分数和卡分数
-                对secret和double卡的设置 当reveal前一轮secret卡评分降低 后一轮增加
-                double卡当detectives离mrX距离很近时使用得分增加
-                对于单次的move 其实是同一套评分系统 detectives想办法让mrX分更低
-             */
+                    当reveal前一轮和后一轮时候改变权重
+                    reveal前一轮 能到的点评分权重增加
+                    reveal后一轮是交通方式 或者用secret卡
+                    判断离reveal的轮数
+                    考虑用不用设置位置分数和卡分数
+                    对secret和double卡的设置 当reveal前一轮secret卡评分降低 后一轮增加
+                    double卡当detectives离mrX距离很近时使用得分增加
+                    对于单次的move 其实是同一套评分系统 detectives想办法让mrX分更低
+                 */
     //得到分数就用这个函数
-    public int giveScore(@Nonnull Board board, int turnNum, int mrXLoc, List<Integer> detectivesLoc){
+    public int giveScore(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc, int source, ScotlandYard.Ticket usedTicket){
         Xbot xbot = new Xbot();
         int score = 0;
 //        if(board.getSetup().moves.get(turnNum+1)) { //当处于reveal的前一轮
@@ -89,7 +91,7 @@ public class Score {
         }
         for(Integer d1 : dk1.getDetectivesDistance()){
             distanceScore += d1;
-            if (d1<5) distanceScore -= 20;
+            if (d1<2) distanceScore -= 20;
         }
         distanceScore /= (Math.pow(4,distance.size()));
         //测试用

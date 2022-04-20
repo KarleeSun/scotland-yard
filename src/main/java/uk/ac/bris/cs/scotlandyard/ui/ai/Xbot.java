@@ -7,13 +7,13 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import io.atlassian.fugue.Pair;
 
 import uk.ac.bris.cs.scotlandyard.model.*;
+
+import static uk.ac.bris.cs.scotlandyard.ui.ai.Minimax.MAX;
+import static uk.ac.bris.cs.scotlandyard.ui.ai.Minimax.MIN;
 
 /*
     是要给每个选择一个分数
@@ -44,7 +44,7 @@ public class Xbot implements Ai {
     private int mrXLoc; //记录mrX的位置和预测位置 相当于move的destination
     private List<Integer> detectivesLoc; //记录detectives的位置 按顺序存在一个list里 相当于是destination
     private int source; //相当于一个move的source，也许没必要，先写着
-//    private List<Integer> detectiveSources; //同上，存detectives的sources
+    //    private List<Integer> detectiveSources; //同上，存detectives的sources
     private Map<ScotlandYard.Ticket, Integer> mrXTickets; //存的是mrX的票
     private Map<ScotlandYard.Ticket, Integer> detectivesTickets; //存的是detective的票
     private Boolean useDouble; //有没有用double票
@@ -64,101 +64,19 @@ public class Xbot implements Ai {
     @Nonnull
     @Override
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
-//        List<Integer> edgePoint = new ArrayList<>(Arrays.asList(1,3,4,5,6,7,8,18,43,57,73,92,121,120,144,
-//                177,176,189,190,192,199,171,175,162,136,119,107,91,56,42,30));
-//        int centralPoint = 101;
+        MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
-        setUp(board); //在这setup了，可是在这外面，这个class里没有set
-        System.out.println("mrXTickets: "+mrXTickets);
-        Minimax.TreeNode root = minimax.tree(board,null,0,1,minimax.MIN,minimax.MAX,mrXLoc,detectivesLoc,turnNum,false,false,mrXTickets,detectivesTickets);
-        int bestScore =  minimax.miniMaxAlphaBeta(root,1,false,minimax.MIN,minimax.MAX).getScore();
-        Set<Move> moves = new HashSet<>();
-        moves.addAll(board.getAvailableMoves());
-//        Set<Move> okayMoves = new HashSet<>();
-//        Set<Move> okkayMoves = new HashSet<>();
-//        Boolean distanceOkay = false;
-//        for(Move m: moves){
-//            Dijkstra dijkstra = new Dijkstra((Integer) getMoveInformation(m).get("destination"),getCurrentDetectivesLoc(board),board);
-//            if(dijkstra.getDetectivesDistance().get(0) > 1) okayMoves.add(m);
-//            for(Integer p : edgePoint){
-//                Dijkstra d = new Dijkstra((Integer) getMoveInformation(m).get("destination"),p,board);
-//                if(d.getDetectivesDistance().get(0) > 1 && distanceOkay)  okkayMoves.add(m);
-//            }
-//        }
-//        return okayMoves.stream().toList().get(new Random().nextInt(okayMoves.size()));
+        Minimax.GameData gameData = new Minimax.GameData(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
+        Minimax.TreeNode root = minimax.tree(board,2, gameData);
+        Minimax.TreeNode bestNode = minimax.miniMaxAlphaBeta(root,2,false,MIN,MAX);
         for(Minimax.TreeNode node: root.getChildren()){
-            if(node.getAlpha() == bestScore){
+            if(node.getAlpha() == bestNode.getScore()){
                 return node.getMove();
             }
         }
-//        for(Minimax.TreeNode node : root.getChildren()){
-//            if(node.getAlpha() == bestScore)
-//                if(okayMoves.contains(node.getMove())) return node.getMove();
-//            else return okayMoves.stream().toList().get(new Random().nextInt(okayMoves.size()));
-//        }
-//        return moves.stream().toList().get(new Random().nextInt(moves.size()));
         return null;
     }
 
-    //=========================================================================================
-    //这些不用再改了
-    //这个setup它set了一个寂寞
-
-    private void setUp(@Nonnull Board board) {
-        MRX = Piece.MrX.MRX;
-        detectives = getAllDetectives(board);
-        mrXLoc = getCurrentMrXLoc(board);
-        detectivesLoc = getCurrentDetectivesLoc(board);
-        source = -1;
-        mrXTickets = getCurrentMrXTickets(board);
-        detectivesTickets = getCurrentDetectiveTickets(board);
-        useDouble = false;
-        useSecret = false;
-        turnNum = board.getMrXTravelLog().size();
-    }
-
-
-    //get mrX current location
-    private int getCurrentMrXLoc(@Nonnull Board board) {
-        return board.getAvailableMoves().stream().iterator().next().source();
-    }
-
-    //get detectives location and return as a list
-    private List<Integer> getCurrentDetectivesLoc(@Nonnull Board board) {
-
-        //get pieces of detectives
-        List<Piece.Detective> detectives = getAllDetectives(board);
-        System.out.println(detectives);
-        //get detectives locations and store them in a list
-        List<Integer> detectiveLocations = new ArrayList<>();
-        for (Piece.Detective detectivePiece : detectives) {
-            detectiveLocations.add(board.getDetectiveLocation(detectivePiece).get());
-            System.out.println(detectivePiece + " " + board.getDetectiveLocation(detectivePiece).get());
-        }
-        return detectiveLocations;
-    }
-
-    public Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(@Nonnull Board board) {
-        Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
-        for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values())
-            mrXTickets.put(t, board.getPlayerTickets(MRX).get().getCount(t));
-        return mrXTickets;
-    }
-
-    private Map<ScotlandYard.Ticket, Integer> getCurrentDetectiveTickets(@Nonnull Board board) {
-        detectivesTickets = new HashMap<>();
-        for (Piece.Detective d : detectives) {
-            for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values()) {
-                if (!detectivesTickets.containsKey(t))
-                    detectivesTickets.put(t, board.getPlayerTickets(d).get().getCount(t));
-                if (detectivesTickets.containsKey(t))
-                    detectivesTickets.put(t, detectivesTickets.get(t) + board.getPlayerTickets(d).get().getCount(t));
-            }
-        }
-        return detectivesTickets;
-    }
-
-    //得到所有存着detectives的piece
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
         List<Piece> allDetectivePieces = new ArrayList<Piece>();
         allDetectivePieces.addAll(board.getPlayers());
@@ -170,166 +88,45 @@ public class Xbot implements Ai {
         }
         return detectives;
     }
-    //====================================================================================================
 
-    //single和double可以分开
-    public List<Move> predictMrXMoves(@Nonnull Board board, Piece MRX,int mrXLoc, List<Integer> detectivesLoc,Map<ScotlandYard.Ticket, Integer> mrXTickets){
-
-        List<Move> moves = new ArrayList<>();
-        moves.addAll(makeSingleMoves(board, MRX,mrXLoc, detectivesLoc,mrXTickets));
-        moves.addAll(makeDoubleMoves(board, MRX,mrXLoc, detectivesLoc,mrXTickets));
-        System.out.println("moves: "+moves);
-        return moves;
+    public Map<ScotlandYard.Ticket, Integer> getCurrentMrXTickets(@Nonnull Board board) {
+        Map<ScotlandYard.Ticket, Integer> mrXTickets = new HashMap<>();
+        for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values())
+            mrXTickets.put(t, board.getPlayerTickets(MRX).get().getCount(t));
+        return mrXTickets;
     }
 
-    //对于mrX
-    //应该是确定走这一步了才能更新，就是在那个树里更新而不是在这更新
-    private List<Move.SingleMove> makeSingleMoves(@Nonnull Board board, Piece MRX, int mrXLoc, List<Integer> detectivesLoc,
-                                                  Map<ScotlandYard.Ticket, Integer> mrXTickets) {
-        source = mrXLoc;
-        System.out.println("mrXTickets: 99"+mrXTickets);
-        List<Move.SingleMove> possibleMoves = new ArrayList<>();
-        Set<Integer> destination = board.getSetup().graph.adjacentNodes(source);
+    public Map<ScotlandYard.Ticket, Integer> getCurrentDetectiveTickets(@Nonnull Board board, Piece.Detective detective) {
+        Map<ScotlandYard.Ticket, Integer> detectiveTickets = new HashMap<>();
+        for (ScotlandYard.Ticket t : ScotlandYard.Ticket.values())
+            detectiveTickets.put(t, board.getPlayerTickets(detective).get().getCount(t));
+        return detectiveTickets;
+    }
+
+    public List<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives,
+                                                 Player player, int source) {
+        Set<Move.SingleMove> possibleMoves = Sets.newHashSet();
+        Set<Integer> destination = setup.graph.adjacentNodes(source);
         for (int d : destination) {
-            if (mrXTickets.get(ScotlandYard.Ticket.SECRET) >= 1 && (!detectivesLoc.contains(d))) {
-                possibleMoves.add(new Move.SingleMove(MRX, source, ScotlandYard.Ticket.SECRET, d));
-            }
-            for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
-                if (mrXTickets.get(t.requiredTicket()) >= 1 && (!detectivesLoc.contains(d))) {
-                    possibleMoves.add(new Move.SingleMove(MRX, mrXLoc, t.requiredTicket(), d));
+            boolean notOccupied = true;          /* node not occupied by detectives*/
+            for (Player detective : detectives) {
+                if (detective.location() == d) {
+                    notOccupied = false;
+                    break;
                 }
             }
-        }
-        return possibleMoves;
-    }
-
-    private List<Move.DoubleMove> makeDoubleMoves(@Nonnull Board board,Piece MRX, int mrXLoc, List<Integer> detectivesLoc,
-                                                  Map<ScotlandYard.Ticket, Integer> mrXTickets){
-        //先判断它有没有double票
-        if (mrXTickets.get(ScotlandYard.Ticket.DOUBLE) == 0) return new ArrayList<>();
-        mrXTickets.put(ScotlandYard.Ticket.DOUBLE,mrXTickets.get(ScotlandYard.Ticket.DOUBLE)-1); //减一张double票
-        List<Move.DoubleMove> doubleAvailableMoves = new ArrayList<>();
-        //store all available first move by invoke makeSingleMove method
-        List<Move.SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(board,MRX,mrXLoc,detectivesLoc,mrXTickets));
-        //iterate through all possible single moves and store its corresponding second move
-        for (Move.SingleMove firstMove : firstAvailableMoves){
-            /* store second available moves*/
-            List<Move.SingleMove> secondAvailableMoves = new ArrayList<>(
-                    makeSingleMoves(board,MRX,firstMove.destination,detectivesLoc, mrXTickets));
-            //iterate through all possible second move for a particular first move and create new double move and store it
-            ScotlandYard.Ticket ticketUsed = firstMove.ticket;
-            Integer ticketLeft = mrXTickets.get(ticketUsed);
-            if (!secondAvailableMoves.isEmpty()) {
-                for (Move.SingleMove secondMove : secondAvailableMoves) {
-                    if (!(secondMove.ticket == ticketUsed) || ticketLeft >= 2) {
-                        doubleAvailableMoves.add( new Move.DoubleMove(MRX, firstMove.source(),
-                                firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination));
+            //iterate through set containing all possible transportation from source to destination
+            if (notOccupied) {
+                for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
+                    if (player.hasAtLeast(t.requiredTicket(), 1)) {
+                        possibleMoves.add(new Move.SingleMove(player.piece(), source, t.requiredTicket(), d));
                     }
                 }
             }
         }
-        return doubleAvailableMoves;
+        return possibleMoves.stream().toList();
     }
 
-    //------------------------------------------------------------------------------------------------------------------
-
-    //用来在minimax中预测detectives会做的理论最优选择
-    //对于detective，无所谓他选择的move，所以只返回更新过后的位置
-    //detectives的问题也一样，他们的票和位置应该在树里更新而不是在这更新
-    //应该是对所有detectives能走的情况都处理，而不仅仅是处理最优情况
-    //所以还要再重写这个函数
-    //要么这个就返回二维数组 存所有可能的detectives的位置
-    public List<List<Map<Integer, ScotlandYard.Ticket>>> predictDetectiveMoves(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc,
-                                                                               Map<ScotlandYard.Ticket, Integer> detectivesTickets){
-        int detectivesNum = detectivesLoc.size();
-        System.out.println("detectivesTTickets: "+detectivesTickets);
-        detectives = getAllDetectives(board);
-        List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMoves = new ArrayList<>();
-        List<Map<Integer,ScotlandYard.Ticket>> oneDetectiveMoves = new ArrayList<>();
-        Map<Integer,ScotlandYard.Ticket> locWithTicket = new HashMap<>();
-        Map<ScotlandYard.Ticket,Integer> detectivesTicketsCopy;
-        //然后每个detective都走到了距离-1的地方
-        for(Integer dLoc: detectivesLoc){ //对于每一个detective
-            Dijkstra dj = new Dijkstra(mrXLoc, dLoc, board);
-            int distance = dj.getDistance();
-            for (int d: board.getSetup().graph.adjacentNodes(dLoc)) {
-                Dijkstra dk = new Dijkstra(mrXLoc, d, board);
-                if (dk.getDistance() < distance) { //所有他能到的地方最近的地方，比现在的近就加进去远就不管 可以不用要这个
-                    for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(dLoc, d, ImmutableSet.of())) {
-//                        detectivesTicketsCopy = detectivesTickets;
-                        System.out.println("1, detectives Tickets:" + detectivesTickets);
-                        System.out.println("t.required ticket: "+ detectivesTickets.get(t.requiredTicket()));
-                        if (detectivesTickets.get(t.requiredTicket()) >= 1) {
-                            System.out.println("aaa");
-                            locWithTicket.put(d, t.requiredTicket());
-//                            detectivesTicketsCopy.put(t.requiredTicket(),detectivesTicketsCopy.get(t.requiredTicket())-1); //
-                            System.out.println("loc with ticket: "+locWithTicket);
-                            oneDetectiveMoves.add(Map.copyOf(locWithTicket));
-                            System.out.println("one d moves: "+ oneDetectiveMoves);
-                            locWithTicket.clear();
-                            System.out.println("one dd moves: "+oneDetectiveMoves);
-                        }
-                    }
-                }
-            }
-            System.out.println("one detective moves: "+oneDetectiveMoves);
-            allDetectiveMoves.add(List.copyOf(oneDetectiveMoves));
-            allDetectiveMoves.removeIf(m -> m.isEmpty());
-            System.out.println("0.all detectivemoves: "+allDetectiveMoves);
-            oneDetectiveMoves.clear();
-            detectivesNum --;
-            System.out.println("number: "+detectivesNum);
-            if(detectivesNum<=0) break;
-        }
-        System.out.println("11detectives loc:"+detectivesLoc);
-        System.out.println("allDetectiveMoves: "+allDetectiveMoves);
-        List<List<Map<Integer, ScotlandYard.Ticket>>> allDetectiveMovesResult = new ArrayList<>();
-        System.out.println("haha: "+ allDetectiveMoves.stream().toList());
-        allDetectiveMovesResult = Lists.cartesianProduct(allDetectiveMoves.stream().toList());
-        System.out.println("allDetectiveMovesResult: "+allDetectiveMovesResult);
-        return allDetectiveMovesResult;
-    }
-
-//    private List<Map<Integer, ScotlandYard.Ticket>> descartes(List<Map<Integer, ScotlandYard.Ticket>>... lists) {
-//        List<Map<Integer, ScotlandYard.Ticket>> tempList = new ArrayList<>();
-//        for (List<Map<Integer, ScotlandYard.Ticket>> list : lists) {
-//            if (tempList.isEmpty()) {
-//                tempList = list;
-//            } else {
-//                //java8新特性，stream流
-//                tempList = tempList.stream().flatMap(item -> list.stream().map(item2 -> item + " " + item2)).collect(Collectors.toList());
-//            }
-//        }
-//        return tempList;
-//    }
-//}
-
-    //就只给两种情况吧 踩上了或者轮数到了 或者moves是空的
-    public Boolean hasWinner(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc) {
-        //mr X being caught
-        if(detectivesLoc.contains(mrXLoc)) return true;
-        //no more round left  && detectives all made moves for this round
-        if (turnNum == board.getSetup().moves.size()) return true;
-        //或者moves空的
-//        if(predictMrXMoves(board,mrXLoc,detectivesLoc,mrXTickets).isEmpty() || predictDetectiveMoves(board, mrXLoc, detectivesLoc).isEmpty())
-//            return true;
-        //no winner yet
-        return false;
-    }
-
-
-    /*
-        多数情况可能doublemove都比singlemove要好，但是double卡是有限的
-        所以在离得远的时候就不用double卡 离得近时候（近到一定程度，再用double）
-
-        给的都应该是destination，即可能到的位置 而不是mrX现在的位置
-        visitor pattern的作用是知道用的是singlemove还是doublemove 这样就可以get所需要的位置
-
-        先只处理single，即：在普通的时候只用singleMove，只有在特殊的时候才用doublemove
-
-     */
-
-    //这个函数用来得到我想得到的全部信息
     public Map<String, Object> getMoveInformation(Move move){
         System.out.println("move: "+ move);
         Minimax minimax = new Minimax();
@@ -340,7 +137,7 @@ public class Xbot implements Ai {
                 System.out.println("singleMove: "+ singleMove);
 //                System.out.println("moveInfo： "+moveInfo);
                 //moveInfo = Map.of()可以将多个元素一次性添加进去
-                moveInfo.put("isDoubleMove",false);
+                moveInfo.put("useDouble",false);
                 moveInfo.put("piece",singleMove.commencedBy());
                 moveInfo.put("source",singleMove.source());
                 moveInfo.put("ticket",singleMove.ticket);
@@ -353,7 +150,7 @@ public class Xbot implements Ai {
             @Override
             public Map<String,Object> visit(Move.DoubleMove doubleMove){
                 System.out.println("doublemove: "+doubleMove);
-                moveInfo.put("isDoubleMove",true);
+                moveInfo.put("useDouble",true);
                 moveInfo.put("piece",doubleMove.commencedBy());
                 moveInfo.put("source",doubleMove.source());
                 moveInfo.put("ticket1",doubleMove.ticket1);
@@ -369,29 +166,26 @@ public class Xbot implements Ai {
         return moveInfo;
     }
 
+    public List<Integer> getLocAsList(List<Player> detectivesPlayer){
+        List<Integer> detectivesLoc = new ArrayList<>();
+        for(Player d: detectivesPlayer){
+            detectivesLoc.add(d.location());
+        }
+        return detectivesLoc;
+    }
+
+
+    public Player getMrXPlayer(@Nonnull Board board, Piece mrX){
+        return new Player(mrX, ImmutableMap.copyOf(getCurrentMrXTickets(board)), board.getAvailableMoves().stream().iterator().next().source());
+    }
+
+    public List<Player> getDetectivePlayers(@Nonnull Board board, List<Piece.Detective> detectives){
+        List<Player> detectivePlayers = new ArrayList<>();
+        for(Piece.Detective d : detectives){
+            Player detective = new Player(d,ImmutableMap.copyOf(getCurrentDetectiveTickets(board,d)),board.getDetectiveLocation(d).get());
+            detectivePlayers.add(detective);
+        }
+        return detectivePlayers;
+    }
+
 }
-
-
-
-
-//new一个map 把Move和对应的分数放进去
-//        Map<Move,Integer> moveWithMark = new HashMap<>();
-//        for(Move move: board.getAvailableMoves().asList()){
-//            moveWithMark.put(move,giveMark(board,move));
-//        }
-////        System.out.println("moveWithMark: "+ moveWithMark);
-//        //比较哪一个分最高，选分最高的那个move
-//        List<Map.Entry<Move,Integer>> listMark = new ArrayList<>(moveWithMark.entrySet());
-//        Collections.sort(listMark, (o1,o2) -> (o2.getValue() - o1.getValue())); //降序排列
-//        Move pickedMove = listMark.get(0).getKey();
-
-//        //测试用
-//        System.out.println("listMark: " + listMark);
-//        System.out.println("pickedMove: " + pickedMove);
-
-//        return pickedMove;
-
-//给一个位置（source）返回它所有可能的move
-//其实可以更新mrX和detectives的位置
-//对于每一个位置 找他的adjacencyNodes 然后判断它有没有票
-//在普通轮double票就特别贵 在detectives离得特别近时候、还有reveal之后，double票就变得便宜
