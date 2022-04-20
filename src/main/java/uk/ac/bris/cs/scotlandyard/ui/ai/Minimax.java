@@ -104,46 +104,50 @@ public class Minimax {
         }
         TreeNode root = new TreeNode(null, 0, false, false, gameData);
         int depthHere = depth;
-        createTree(board,root,depthHere,gameData);
+        createTree(board, root, depthHere, gameData);
         return root;
     }
 
     public void createTree(@Nonnull Board board, TreeNode node, int depth, GameData gameData) {
         Xbot xbot = new Xbot();
-        if(depth > 0){
-            depth -= 1 ;
-            for (Move m : board.getAvailableMoves()) {
-                Player updateMrX = gameData.mrX.at((int) xbot.getMoveInformation(m).get("destination")).use(m.tickets());
-                GameData newGameData = new GameData(updateMrX, gameData.detectives.stream().toList());
-                Score score = new Score();
-                int s = score.giveScore(board, newGameData.mrX.location(), xbot.getLocAsList(newGameData.detectives),m.source(),m.tickets().iterator().next());
-                TreeNode mrXNode = new TreeNode(m, s, (Boolean) xbot.getMoveInformation(m).get("useDouble"), (Boolean) xbot.getMoveInformation(m).get("useSecret"), newGameData);
-                mrXNode.setParent(node);
+        for (Move m : board.getAvailableMoves()) {
+            if (depth <= 0) break;
+            depth --;
+            int destination = (int) xbot.getMoveInformation(m).get("destination");
+            System.out.println("destination: " + destination);
+            Player updateMrX = gameData.mrX.at(destination).use(m.tickets());
+            GameData newGameData = new GameData(updateMrX, gameData.detectives.stream().toList());
+            Score score = new Score();
+            int s = score.giveScore(board, newGameData.mrX.location(), xbot.getLocAsList(newGameData.detectives), m.source(), m.tickets().iterator().next());
+            Boolean useDouble = (Boolean) xbot.getMoveInformation(m).get("useDouble");
+            Boolean useSecret = (Boolean) xbot.getMoveInformation(m).get("useSecret");
+            TreeNode mrXNode = new TreeNode(m, s, useDouble, useSecret, newGameData);
+            mrXNode.setParent(node);
 
-                List<List<Player>> allUpdatedDetectives = new ArrayList<>();
-                List<Player> updatedOneDetective = new ArrayList<>();
-                for(Player detective : newGameData.detectives){ //对于每一个detective
-                    List<Move.SingleMove> oneDetectiveMove = xbot.makeSingleMoves(board.getSetup(),newGameData.detectives,detective,detective.location());
-                    for(Move.SingleMove singleMove: oneDetectiveMove){
-                        Player updateDetective = detective.at(singleMove.destination).use(singleMove.ticket).give(singleMove.ticket);
-                        updatedOneDetective.add(updateDetective);
-                    }
-                    allUpdatedDetectives.add(updatedOneDetective);
+            List<List<Player>> allUpdatedDetectives = new ArrayList<>();
+            List<Player> updatedOneDetective = new ArrayList<>();
+            for (Player detective : newGameData.detectives) { //对于每一个detective
+                List<Move.SingleMove> oneDetectiveMove = xbot.makeSingleMoves(board.getSetup(), newGameData.detectives, detective, detective.location());
+                for (Move.SingleMove singleMove : oneDetectiveMove) {
+                    Player updateDetective = detective.at(singleMove.destination).use(singleMove.ticket).give(singleMove.ticket);
+                    updatedOneDetective.add(updateDetective);
                 }
-                List<List<Player>> result = Lists.cartesianProduct(allUpdatedDetectives);
-                for(List<Player> detectivesMoveOnce: result){
-                    GameData updateGameData = new GameData(newGameData.mrX,detectivesMoveOnce);
-                    Score score1 = new Score();
-                    int s1 = score1.giveScore(board, updateGameData.mrX.location(), xbot.getLocAsList(updateGameData.detectives),m.source(),m.tickets().iterator().next());
-                    TreeNode detectivesNode = new TreeNode(mrXNode.move,s1,(Boolean) xbot.getMoveInformation(m).get("useDouble"), (Boolean) xbot.getMoveInformation(m).get("useSecret"),updateGameData);
-                    detectivesNode.setParent(mrXNode);
-                    createTree(board,detectivesNode,depth,updateGameData);
-                }
+                allUpdatedDetectives.add(updatedOneDetective);
+            }
+            List<List<Player>> result = Lists.cartesianProduct(allUpdatedDetectives);
+            for (List<Player> detectivesMoveOnce : result) {
+                if (depth <= 0) break;
+                GameData updateGameData = new GameData(newGameData.mrX, detectivesMoveOnce);
+                Score score1 = new Score();
+                int s1 = score1.giveScore(board, updateGameData.mrX.location(), xbot.getLocAsList(updateGameData.detectives), m.source(), m.tickets().iterator().next());
+                TreeNode detectivesNode = new TreeNode(mrXNode.move, s1, useDouble, useSecret, updateGameData);
+                detectivesNode.setParent(mrXNode);
+                System.out.println("depth: " + depth);
+//                    createTree(board,detectivesNode,depth,updateGameData);
             }
         }
+
     }
-
-
 
 
     //最终把最好的move传给root存到root的move里

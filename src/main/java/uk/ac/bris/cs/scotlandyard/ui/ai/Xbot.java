@@ -72,6 +72,7 @@ public class Xbot implements Ai {
         for(Minimax.TreeNode node: root.getChildren()){
             if(node.getAlpha() == bestNode.getScore()){
                 return node.getMove();
+//                return null;
             }
         }
         return null;
