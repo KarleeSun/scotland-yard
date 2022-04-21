@@ -48,7 +48,6 @@ public class Dijkstra {
             detectiveDistances.add(distance[d]);
         }
         detectiveDistances.sort(Comparator.naturalOrder());
-        System.out.println(terminated);
         return detectiveDistances;
     }
     public int getDistance(){

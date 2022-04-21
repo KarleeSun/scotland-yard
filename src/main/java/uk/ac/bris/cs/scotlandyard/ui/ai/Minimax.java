@@ -118,25 +118,36 @@ public class Minimax {
             Player updateMrX = gameData.mrX.at(destination).use(m.tickets());
             GameData newGameData = new GameData(updateMrX, gameData.detectives.stream().toList());
             Score score = new Score();
+            System.out.println("is here?");
+            System.out.println("m.tickets().iterator().next(): "+m.tickets().iterator().next());
             int s = score.giveScore(board, newGameData.mrX.location(), xbot.getLocAsList(newGameData.detectives), m.source(), m.tickets().iterator().next());
             Boolean useDouble = (Boolean) xbot.getMoveInformation(m).get("useDouble");
             Boolean useSecret = (Boolean) xbot.getMoveInformation(m).get("useSecret");
             TreeNode mrXNode = new TreeNode(m, s, useDouble, useSecret, newGameData);
+            System.out.println("or here?");
             mrXNode.setParent(node);
 
+            System.out.println("here??");
             List<List<Player>> allUpdatedDetectives = new ArrayList<>();
             List<Player> updatedOneDetective = new ArrayList<>();
             for (Player detective : newGameData.detectives) { //对于每一个detective
+                System.out.println("00000");
                 List<Move.SingleMove> oneDetectiveMove = xbot.makeSingleMoves(board.getSetup(), newGameData.detectives, detective, detective.location());
                 for (Move.SingleMove singleMove : oneDetectiveMove) {
+                    System.out.println("11111");
                     Player updateDetective = detective.at(singleMove.destination).use(singleMove.ticket).give(singleMove.ticket);
                     updatedOneDetective.add(updateDetective);
                 }
                 allUpdatedDetectives.add(updatedOneDetective);
             }
-            List<List<Player>> result = Lists.cartesianProduct(allUpdatedDetectives);
+            System.out.println("22222");
+            System.out.println("allUpdatedDetectives: "+allUpdatedDetectives);
+            List<List<Player>> result = Lists.cartesianProduct(ImmutableList.copyOf(allUpdatedDetectives));
+            System.out.println("result: "+result);
+            System.out.println("result.size: "+result.size());
             for (List<Player> detectivesMoveOnce : result) {
                 if (depth <= 0) break;
+                System.out.println("loop here?");
                 GameData updateGameData = new GameData(newGameData.mrX, detectivesMoveOnce);
                 Score score1 = new Score();
                 int s1 = score1.giveScore(board, updateGameData.mrX.location(), xbot.getLocAsList(updateGameData.detectives), m.source(), m.tickets().iterator().next());
@@ -152,7 +163,7 @@ public class Minimax {
 
     //最终把最好的move传给root存到root的move里
     public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta) {
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!node : " + node.getMove());
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!node : " + node);
         if (node.children.isEmpty()) {
             return node;
         }

@@ -67,7 +67,7 @@ public class Score {
 //            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
 //                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
 //        } else { //普通情况
-            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
+            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, mrXLoc)
                     + guessPossibilityScore(board, source, usedTicket); //还没设置参数
 //        }
         System.out.println("score: "+score);
