@@ -110,9 +110,13 @@ public class Minimax {
 
     public void createTree(@Nonnull Board board, TreeNode node, int depth, GameData gameData) {
         Xbot xbot = new Xbot();
+        depth --;
+        System.out.println("moves of mrX: "+board.getAvailableMoves());
+        System.out.println("moves.size: "+board.getAvailableMoves().size());
+        int i = 0; int j = 0;
         for (Move m : board.getAvailableMoves()) {
-            if (depth <= 0) break;
-            depth --;
+            i++;
+            System.out.println("mrX loop num: "+i);
             int destination = (int) xbot.getMoveInformation(m).get("destination");
             System.out.println("destination: " + destination);
             Player updateMrX = gameData.mrX.at(destination).use(m.tickets());
@@ -129,9 +133,9 @@ public class Minimax {
 
             System.out.println("here??");
             List<List<Player>> allUpdatedDetectives = new ArrayList<>();
-            List<Player> updatedOneDetective = new ArrayList<>();
             for (Player detective : newGameData.detectives) { //对于每一个detective
                 System.out.println("00000");
+                List<Player> updatedOneDetective = new ArrayList<>();
                 List<Move.SingleMove> oneDetectiveMove = xbot.makeSingleMoves(board.getSetup(), newGameData.detectives, detective, detective.location());
                 for (Move.SingleMove singleMove : oneDetectiveMove) {
                     System.out.println("11111");
@@ -146,8 +150,9 @@ public class Minimax {
             System.out.println("result: "+result);
             System.out.println("result.size: "+result.size());
             for (List<Player> detectivesMoveOnce : result) {
-                if (depth <= 0) break;
                 System.out.println("loop here?");
+                j++;
+                System.out.println("detective loop num: "+j);
                 GameData updateGameData = new GameData(newGameData.mrX, detectivesMoveOnce);
                 Score score1 = new Score();
                 int s1 = score1.giveScore(board, updateGameData.mrX.location(), xbot.getLocAsList(updateGameData.detectives), m.source(), m.tickets().iterator().next());
@@ -174,6 +179,7 @@ public class Minimax {
                 System.out.println("size: " + node.children.size());
                 System.out.println("i: " + i);
                 System.out.println("children: " + node.children.get(i));
+                System.out.println("score11: "+node+","+node.score);
                 TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, false, alpha, beta);
                 if (bestScoreNode.score <= scoreNode.score) {
                     bestScoreNode = scoreNode;
@@ -182,7 +188,7 @@ public class Minimax {
                 node.alpha = alpha;
                 System.out.println("alpha: " + node.getAlpha());
                 System.out.println("beta: " + node.getBeta());
-                System.out.println("score: " + node.getScore());
+                System.out.println("score22: " + node.getScore());
                 if (beta <= alpha)
                     break;
                 System.out.println("best move: " + bestScoreNode.getMove());
@@ -202,7 +208,7 @@ public class Minimax {
                 node.beta = beta;
                 System.out.println("alpha: " + node.getAlpha());
                 System.out.println("beta: " + node.getBeta());
-                System.out.println("score: " + node.getScore());
+                System.out.println("score33: " + node.getScore());
 
                 if (beta <= alpha)
                     break;
