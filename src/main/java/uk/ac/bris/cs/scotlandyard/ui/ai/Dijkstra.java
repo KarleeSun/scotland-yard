@@ -18,6 +18,7 @@ public class Dijkstra {
     private final List<List<Node>> adjacentNodes;         /*store all adjacent nodes of all nodes*/
     private final Node source;                            /*source node: mrX's location*/
     private final List<Integer> destinations;             /*detectivesLocation*/
+
     //For multiple destination
     public Dijkstra(int mrXLocation, List<Integer> detectivesLocation, Board board) {
         this.board = board;

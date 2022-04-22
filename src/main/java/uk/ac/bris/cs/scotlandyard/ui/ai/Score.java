@@ -60,16 +60,9 @@ public class Score {
     public int giveScore(@Nonnull Board board, int mrXLoc, List<Integer> detectivesLoc, int source, ScotlandYard.Ticket usedTicket){
         Xbot xbot = new Xbot();
         int score = 0;
-//        if(board.getSetup().moves.get(turnNum+1)) { //当处于reveal的前一轮
-//            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
-//                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
-//        } else if(board.getSetup().moves.get(turnNum-1)) {//当处于reveal的后一轮
-//            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, source)
-//                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
-//        } else { //普通情况
-            score = distanceScore(board, mrXLoc,detectivesLoc) + transportationScore(board, mrXLoc)
-                    + guessPossibilityScore(board, source, usedTicket); //还没设置参数
-//        }
+        if(distanceScore(board, mrXLoc,detectivesLoc)<=0) return -10;
+        score = distanceScore(board, mrXLoc,detectivesLoc)*10 + transportationScore(board, mrXLoc)
+                + guessPossibilityScore(board, source, usedTicket); //还没设置参数
         System.out.println("score: "+score);
         return score;
     }
@@ -89,11 +82,13 @@ public class Score {
             distanceScore += d;
             distanceScore *= 4; //这个数不合适的话后期可以改
         }
+        if(distanceScore <= 0) return -10;
+        System.out.println("dddddddistance score: "+distanceScore);
         for(Integer d1 : dk1.getDetectivesDistance()){
             distanceScore += d1;
-            if (d1<2) distanceScore -= 20;
+            if (d1<2) distanceScore -= Math.pow(2,(distance.size()-1));
         }
-        distanceScore /= (Math.pow(4,distance.size()));
+        distanceScore /= (Math.pow(4,distance.size()-1));
         //测试用
         System.out.println("distanceScore: "+distanceScore);
         return distanceScore;

@@ -2,6 +2,7 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
@@ -16,13 +17,9 @@ public class Minimax {
     public static int MIN = -100000;
     public static int MAX = 100000;
     public static Piece.MrX mrX = Piece.MrX.MRX;
-    private int mrXLoc;
-    private List<Integer> detectivesLoc;
-    private int turnNum; //记录轮数，记得每次走完更新
-    private Boolean useDouble; //用没用double卡（singlemove or doublemove）
-    private Boolean useSecret;
-    private Map<ScotlandYard.Ticket, Integer> mrXTickets;
-    private Map<ScotlandYard.Ticket, Integer> detectivesTickets;
+//    private int mrXLoc;
+//    private List<Integer> detectivesLoc;
+//    private int turnNum; //记录轮数，记得每次走完更新
 
     //对于每一个结点他就存了这些值，可以设置成如果不传入就是默认，或者就传入吧也累不死
     //刚开始创建这个node时候就可以传初始值，然后在node里面计算时候按需更改
@@ -33,7 +30,6 @@ public class Minimax {
         private int beta = MAX;
         private TreeNode parent;
         private List<TreeNode> children;
-        //        private int turnNum; //记录轮数，记得每次走完更新
         private Boolean useDouble; //用没用double卡（singlemove or doublemove）
         private Boolean useSecret;
         private GameData gameData;
@@ -45,12 +41,9 @@ public class Minimax {
             this.alpha = MIN;
             this.beta = MAX;
             this.children = new ArrayList<>();
-//            this.source = source; //移动前的位置 不需要其实，因为他的出发位置就是他爹的到达位置
-//            this.turnNum = turnNum; //记录一下轮数
             this.useDouble = useDouble; //有没有用double卡
             this.useSecret = useSecret; //有没有用secret卡
             this.gameData = gameData;
-//            this.parent = new TreeNode(null,0,MIN,MAX,0,null,0,false,false,null,null);
         }
 
         public void addChild(TreeNode child) {
@@ -111,10 +104,20 @@ public class Minimax {
     public void createTree(@Nonnull Board board, TreeNode node, int depth, GameData gameData) {
         Xbot xbot = new Xbot();
         depth --;
+        int i = 0; int j = 0;
+        ImmutableSet<Move> allPossibleMoves = board.getAvailableMoves();
+        Set<Move> moves;
+        Set<Move> singleMoves = new HashSet<>();
+        Set<Move> doubleMoves = new HashSet<>();
+        for(Move move: allPossibleMoves){
+            if(!(Boolean) xbot.getMoveInformation(move).get("useDouble")) singleMoves.add(move);
+            else doubleMoves.add(move);
+        }
+        if(!useDoubleHere(board, gameData)) moves = singleMoves;
+        else moves = doubleMoves;
         System.out.println("moves of mrX: "+board.getAvailableMoves());
         System.out.println("moves.size: "+board.getAvailableMoves().size());
-        int i = 0; int j = 0;
-        for (Move m : board.getAvailableMoves()) {
+        for (Move m : moves) { //对于mrX的每一个move
             i++;
             System.out.println("mrX loop num: "+i);
             int destination = (int) xbot.getMoveInformation(m).get("destination");
@@ -124,10 +127,10 @@ public class Minimax {
             Score score = new Score();
             System.out.println("is here?");
             System.out.println("m.tickets().iterator().next(): "+m.tickets().iterator().next());
-            int s = score.giveScore(board, newGameData.mrX.location(), xbot.getLocAsList(newGameData.detectives), m.source(), m.tickets().iterator().next());
+//            int s = score.giveScore(board, newGameData.mrX.location(), xbot.getLocAsList(newGameData.detectives), m.source(), m.tickets().iterator().next());
             Boolean useDouble = (Boolean) xbot.getMoveInformation(m).get("useDouble");
             Boolean useSecret = (Boolean) xbot.getMoveInformation(m).get("useSecret");
-            TreeNode mrXNode = new TreeNode(m, s, useDouble, useSecret, newGameData);
+            TreeNode mrXNode = new TreeNode(m, -1, useDouble, useSecret, newGameData);
             System.out.println("or here?");
             mrXNode.setParent(node);
 
@@ -138,9 +141,13 @@ public class Minimax {
                 List<Player> updatedOneDetective = new ArrayList<>();
                 List<Move.SingleMove> oneDetectiveMove = xbot.makeSingleMoves(board.getSetup(), newGameData.detectives, detective, detective.location());
                 for (Move.SingleMove singleMove : oneDetectiveMove) {
-                    System.out.println("11111");
-                    Player updateDetective = detective.at(singleMove.destination).use(singleMove.ticket).give(singleMove.ticket);
-                    updatedOneDetective.add(updateDetective);
+                    Dijkstra before = new Dijkstra(newGameData.mrX.location(),singleMove.source(),board);
+                    Dijkstra after = new Dijkstra(newGameData.mrX.location(),singleMove.destination,board);
+                    if(after.getDistance() < before.getDistance()) {
+                        System.out.println("11111");
+                        Player updateDetective = detective.at(singleMove.destination).use(singleMove.ticket).give(singleMove.ticket);
+                        updatedOneDetective.add(updateDetective);
+                    }
                 }
                 allUpdatedDetectives.add(updatedOneDetective);
             }
@@ -165,6 +172,15 @@ public class Minimax {
 
     }
 
+    public Boolean useDoubleHere(@Nonnull Board board, GameData gameData){
+        int turnNum = board.getMrXTravelLog().size();
+        if(turnNum > 0 && board.getSetup().moves.get(turnNum)) return true;
+        Xbot xbot = new Xbot();
+        Dijkstra dijkstra = new Dijkstra(gameData.mrX.location(),xbot.getLocAsList(gameData.detectives),board);
+        if(dijkstra.getDetectivesDistance().get(0) < 2) return true;
+        return false;
+    }
+
 
     //最终把最好的move传给root存到root的move里
     public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta) {
@@ -186,6 +202,7 @@ public class Minimax {
                 }
                 alpha = Math.max(alpha, bestScoreNode.score);
                 node.alpha = alpha;
+                node.score = alpha;
                 System.out.println("alpha: " + node.getAlpha());
                 System.out.println("beta: " + node.getBeta());
                 System.out.println("score22: " + node.getScore());
@@ -206,6 +223,7 @@ public class Minimax {
                 }
                 beta = Math.min(beta, bestScoreNode.score);
                 node.beta = beta;
+                node.score = beta;
                 System.out.println("alpha: " + node.getAlpha());
                 System.out.println("beta: " + node.getBeta());
                 System.out.println("score33: " + node.getScore());
