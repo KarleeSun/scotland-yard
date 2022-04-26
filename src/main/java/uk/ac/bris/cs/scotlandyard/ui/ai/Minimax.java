@@ -21,8 +21,8 @@ public class Minimax {
     public class TreeNode {
         private Move move;
         private int score;
-        private int alpha = MIN;
-        private int beta = MAX;
+        public int alpha = MIN;
+        public int beta = MAX;
         private TreeNode parent;
         private List<TreeNode> children;
         private Boolean useDouble; //用没用double卡（singlemove or doublemove）
@@ -60,19 +60,19 @@ public class Minimax {
         }
 
         public Move getMove() {
-            return move;
+            return this.move;
         }
 
         public int getScore() {
-            return score;
+            return this.score;
         }
 
         public int getBeta() {
-            return beta;
+            return this.beta;
         }
 
         public int getAlpha() {
-            return alpha;
+            return this.alpha;
         }
 
         public TreeNode getParent() {
@@ -105,7 +105,7 @@ public class Minimax {
 //        for(Move move : moves){
 //            if(move instanceof Move.DoubleMove) moves.remove(move);
 //        }
-        moves.removeIf(move -> move instanceof Move.DoubleMove);
+//        moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
             for (ScotlandYard.Ticket ticket : move.tickets())
@@ -258,6 +258,7 @@ public class Minimax {
                 v = Math.max(v, scoreNode.score);
                 alpha = Math.max(v, alpha);
                 node.score = v;
+                node.alpha = alpha;
                 if (beta <= alpha)
                     break;
             }
@@ -268,6 +269,7 @@ public class Minimax {
                 v = Math.min(v, scoreNode.score);
                 beta = Math.min(v, beta);
                 node.score = v;
+                node.beta = beta;
                 if (beta <= alpha)
                     break;
             }
