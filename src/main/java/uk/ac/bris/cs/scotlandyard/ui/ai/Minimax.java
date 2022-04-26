@@ -133,7 +133,6 @@ public class Minimax {
                 timeList.add(System.currentTimeMillis() - start);
                 createTree(newNode, depth - 1, gameData);
             }
-
         } else {
             for (Move move : moves) {
                 long start = System.currentTimeMillis();
