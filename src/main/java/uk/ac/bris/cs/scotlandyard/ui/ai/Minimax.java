@@ -102,10 +102,7 @@ public class Minimax {
         Dijkstra dijkstra = new Dijkstra(node.shit);
         Xbot xbot = new Xbot();
         List<Move> moves = new ArrayList<>(node.shit.getAvailableMoves().stream().toList());
-//        for(Move move : moves){
-//            if(move instanceof Move.DoubleMove) moves.remove(move);
-//        }
-//        moves.removeIf(move -> move instanceof Move.DoubleMove);
+        moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
             for (ScotlandYard.Ticket ticket : move.tickets())
