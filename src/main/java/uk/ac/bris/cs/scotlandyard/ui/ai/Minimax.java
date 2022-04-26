@@ -92,14 +92,17 @@ public class Minimax {
         TreeNode root = new TreeNode(null, 0, false, false, gameData);
         root.shit = (Board.GameState) board;
         createTree(root, depth);
-        // TreeNode node = miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
-        return root;
+        TreeNode node = miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        return node;
     }
+
+    public List<Long> timeList = new ArrayList<>();
 
     public void createTree(TreeNode node, int depth) {
         Dijkstra dijkstra = new Dijkstra(node.shit);
         List<Move> moves = new ArrayList<>(node.shit.getAvailableMoves().stream().toList());
         moves.removeIf(move -> {
+            if (move instanceof Move.DoubleMove) return false;
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
             for (ScotlandYard.Ticket ticket : move.tickets())
                 tickets.add(ticket);
@@ -116,22 +119,26 @@ public class Minimax {
                     lastDistance = parent.parent.distance;
             for (Move move : moves) {
                 int destination = move instanceof Move.SingleMove ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
+                long start = System.currentTimeMillis();
                 int distance = dijkstra.getDistance(location, destination);
                 TreeNode newNode = new TreeNode(move, distance, false, false, null);
                 newNode.shit = node.shit;
                 node.addChild(newNode);
                 newNode.setParent(node);
+                timeList.add(System.currentTimeMillis() - start);
                 createTree(newNode, depth - 1);
             }
 
         } else {
             for (Move move : moves) {
+                long start = System.currentTimeMillis();
                 List<Integer> possibles = getmrxPossibleLocation(node.shit);
                 int distance = getDistance(possibles, move, node.shit);
                 TreeNode newNode = new TreeNode(move, distance, false, false, null);
                 newNode.shit = node.shit;
                 node.addChild(newNode);
                 newNode.setParent(node);
+                timeList.add(System.currentTimeMillis() - start);
                 createTree(newNode, depth - 1);
             }
         }
@@ -240,6 +247,7 @@ public class Minimax {
         }
         int v = node.score;
         if (maximizing) {
+            System.out.println("mlgb");
             for (int i = 0; i < node.children.size(); i++) {
                 TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, false, alpha, beta);
                 v = Math.max(v, scoreNode.score);
@@ -249,6 +257,7 @@ public class Minimax {
                     break;
             }
         } else {
+            System.out.println("node children size: "+node.children.size());
             for (int i = 0; i < node.children.size(); i++) {
                 TreeNode scoreNode = miniMaxAlphaBeta(node.children.get(i), depth + 1, true, alpha, beta);
                 v = Math.min(v, scoreNode.score);

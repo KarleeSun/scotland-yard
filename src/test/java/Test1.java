@@ -40,6 +40,7 @@ public class Test1 {
         for (Map.Entry<Integer, List<Minimax.TreeNode>> shit : shitbuffer.entrySet()) {
             System.out.println("    depth: " + shit.getKey() + " size:" + shit.getValue().size());
         }
+        System.out.println("avg distance use:" + minimax.timeList.stream().mapToLong(t -> t).average().orElseThrow() + "ms");
     }
 
     public void countShit(Minimax.TreeNode node, Map<Integer, List<Minimax.TreeNode>> buffer, int depth) {
