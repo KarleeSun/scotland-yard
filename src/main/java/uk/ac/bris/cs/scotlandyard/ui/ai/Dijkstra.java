@@ -11,39 +11,29 @@ import java.util.*;
 public class Dijkstra {
     static int MAX = 100000;
     private final Board board;
-    private final int[] distance;                         /*store distance from source to vertex(index)*/
-    private final Set<Integer> terminated;                /*store terminated vertices*/
+    private int[] distance;                         /*store distance from source to vertex(index)*/
+    private Set<Integer> terminated;                /*store terminated vertices*/
     private final PriorityQueue<Node> priorityQueue;
     private final int V;                                  /*total number of vertices*/
     private final List<List<Node>> adjacentNodes;         /*store all adjacent nodes of all nodes*/
-    private final Node source;                            /*source node: mrX's location*/
-    private final List<Integer> destinations;             /*detectivesLocation*/
+    private Node source;                            /*source node: mrX's location*/
+    private List<Integer> destinations;             /*detectivesLocation*/
 
-    //For multiple destination
-    public Dijkstra(int mrXLocation, List<Integer> detectivesLocation, Board board) {
+
+    public Dijkstra(@Nonnull Board board){
         this.board = board;
         V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
         terminated = new HashSet<Integer>();
         priorityQueue = new PriorityQueue<Node>(V, new Node());         /*order according to Node weight*/
         adjacentNodes = getAllAdjacentNodes(board);                     /*graph vertex start from 1, fill 0 with empty list*/
+    }
+
+
+    //return: a list of weights from mr X to individual detectives, ordered from lowest to largest
+    public List<Integer> getDetectivesDistance(int mrXLocation, List<Integer> detectivesLocation) {
         source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
         destinations = detectivesLocation;
         distance = dijkstraShortestDistance(source.vertex);
-    }
-    //For 1 destination
-    public Dijkstra(int mrXLocation, int detectiveLocation, Board board) {
-        this.board = board;
-        V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
-        terminated = new HashSet<Integer>();
-        priorityQueue = new PriorityQueue<Node>(V, new Node());         /*order according to Node weight*/
-        adjacentNodes = getAllAdjacentNodes(board);                     /*graph vertex start from 1, fill 0 with empty list*/
-        source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
-        destinations = List.of(detectiveLocation);
-        distance = dijkstraShortestDistance(source.vertex);
-    }
-
-    //return: a list of weights from mr X to individual detectives, ordered from lowest to largest
-    public List<Integer> getDetectivesDistance() {
         List<Integer> detectiveDistances = new ArrayList();
         for (Integer d : destinations) {
             detectiveDistances.add(distance[d]);
@@ -51,8 +41,9 @@ public class Dijkstra {
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
     }
-    public int getDistance(){
-        return distance[destinations.get(0)];
+    public int getDistance(int s, int destination){
+        destinations = List.of(destination);
+        return dijkstraShortestDistance(s)[destination];
     }
 
     //convert transportation to distance according the number of according ticket left from detectives
@@ -97,6 +88,7 @@ public class Dijkstra {
 
     //Dijkstra to find the shortest distance between source and destination
     private int[] dijkstraShortestDistance(int source) {
+        terminated = new HashSet<Integer>();
         int[] sourceToVertexDistance = new int[V];
         adjacentNodes.addAll(getAllAdjacentNodes(board));  /*make an adjacency list of all vertex in the graph*/
         for (int i = 0; i < V; i++) sourceToVertexDistance[i] = MAX;        /*assign initial value*/

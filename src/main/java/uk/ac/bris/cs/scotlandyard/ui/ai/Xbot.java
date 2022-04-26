@@ -2,8 +2,6 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
@@ -66,16 +64,9 @@ public class Xbot implements Ai {
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
-        Minimax.GameData gameData = new Minimax.GameData(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
+        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
         Minimax.TreeNode root = minimax.tree(board,2, gameData);
-        Minimax.TreeNode bestNode = minimax.miniMaxAlphaBeta(root,2,false,MIN,MAX);
-        for(Minimax.TreeNode node: root.getChildren()){
-            if(node.getAlpha() == bestNode.getScore()){
-                return node.getMove();
-//                return null;
-            }
-        }
-        return null;
+        return root.getMove();
     }
 
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
@@ -126,6 +117,34 @@ public class Xbot implements Ai {
             }
         }
         return possibleMoves.stream().toList();
+    }
+
+    private Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup,
+                                                        List<Player> detectives,
+                                                        Player player,
+                                                        int source) {
+        if(!player.hasAtLeast(ScotlandYard.Ticket.DOUBLE,1)) return new HashSet<>();
+        Set<Move.DoubleMove> doubleAvailableMoves = new HashSet<>();
+        //store all available first move by invoke makeSingleMove method
+        List<Move.SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(setup, detectives, player, source));
+        //iterate through all possible single moves and store its corresponding second move
+        for (Move.SingleMove firstMove : firstAvailableMoves){
+            /* store second available moves*/
+            List<Move.SingleMove> secondAvailableMoves = new ArrayList<>(
+                    makeSingleMoves(setup, detectives, player, firstMove.destination));
+            //iterate through all possible second move for a particular first move and create new double move and store it
+            ScotlandYard.Ticket ticketUsed = firstMove.ticket;
+            Integer ticketLeft = player.tickets().get(ticketUsed);
+            if (!secondAvailableMoves.isEmpty()) {
+                for (Move.SingleMove secondMove : secondAvailableMoves) {
+                    if (!(secondMove.ticket == ticketUsed) || ticketLeft >= 2) {
+                        doubleAvailableMoves.add( new Move.DoubleMove(player.piece(), firstMove.source(),
+                                firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination));
+                    }
+                }
+            }
+        }
+        return doubleAvailableMoves;
     }
 
     public Map<String, Object> getMoveInformation(Move move){
