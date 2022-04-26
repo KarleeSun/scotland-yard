@@ -91,15 +91,16 @@ public class Minimax {
         System.out.println("loaded");
         TreeNode root = new TreeNode(null, 0, false, false, gameData);
         root.shit = (Board.GameState) board;
-        createTree(root, depth);
+        createTree(root, depth, gameData);
         TreeNode node = miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
         return node;
     }
 
     public List<Long> timeList = new ArrayList<>();
 
-    public void createTree(TreeNode node, int depth) {
+    public void createTree(TreeNode node, int depth, Info gameData) {
         Dijkstra dijkstra = new Dijkstra(node.shit);
+        Xbot xbot = new Xbot();
         List<Move> moves = new ArrayList<>(node.shit.getAvailableMoves().stream().toList());
 //        for(Move move : moves){
 //            if(move instanceof Move.DoubleMove) moves.remove(move);
@@ -123,26 +124,28 @@ public class Minimax {
             for (Move move : moves) {
                 int destination = move instanceof Move.SingleMove ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
                 long start = System.currentTimeMillis();
-                int distance = dijkstra.getDistance(location, destination);
+//                int distance = dijkstra.getDistance(location, destination);
+                int distance = dijkstra.getDetectivesDistance(destination,xbot.getLocAsList(gameData.detectives)).get(0);
                 TreeNode newNode = new TreeNode(move, distance, false, false, null);
                 newNode.shit = node.shit;
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(newNode, depth - 1);
+                createTree(newNode, depth - 1, gameData);
             }
 
         } else {
             for (Move move : moves) {
                 long start = System.currentTimeMillis();
                 List<Integer> possibles = getmrxPossibleLocation(node.shit);
-                int distance = getDistance(possibles, move, node.shit);
+                int distance = dijkstra.getDistance(gameData.mrX.location(),((Move.SingleMove)move).destination);
+//                int distance = getDistance(possibles, move, node.shit);
                 TreeNode newNode = new TreeNode(move, distance, false, false, null);
                 newNode.shit = node.shit;
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(newNode, depth - 1);
+                createTree(newNode, depth - 1, gameData);
             }
         }
     }
