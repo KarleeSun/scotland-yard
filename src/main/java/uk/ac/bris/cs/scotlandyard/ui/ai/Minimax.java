@@ -101,8 +101,11 @@ public class Minimax {
     public void createTree(TreeNode node, int depth) {
         Dijkstra dijkstra = new Dijkstra(node.shit);
         List<Move> moves = new ArrayList<>(node.shit.getAvailableMoves().stream().toList());
+//        for(Move move : moves){
+//            if(move instanceof Move.DoubleMove) moves.remove(move);
+//        }
+        moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
-            if (move instanceof Move.DoubleMove) return false;
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
             for (ScotlandYard.Ticket ticket : move.tickets())
                 tickets.add(ticket);

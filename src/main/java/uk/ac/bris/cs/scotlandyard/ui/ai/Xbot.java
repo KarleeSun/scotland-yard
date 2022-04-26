@@ -65,7 +65,7 @@ public class Xbot implements Ai {
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
-        Minimax.TreeNode root = minimax.tree(board,1, gameData);
+        Minimax.TreeNode root = minimax.tree(board,2, gameData);
         Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
         for(Minimax.TreeNode ChildNode : root.getChildren()){
             if(ChildNode.getScore() > maxScoreNode.getScore())
