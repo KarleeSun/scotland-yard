@@ -105,7 +105,7 @@ public class Minimax {
 //        for(Move move : moves){
 //            if(move instanceof Move.DoubleMove) moves.remove(move);
 //        }
-//        moves.removeIf(move -> move instanceof Move.DoubleMove);
+        moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
             for (ScotlandYard.Ticket ticket : move.tickets())
