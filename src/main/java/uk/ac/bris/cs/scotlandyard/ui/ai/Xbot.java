@@ -68,8 +68,17 @@ public class Xbot implements Ai {
         Minimax.TreeNode root = minimax.tree(board,3, gameData);
         Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
         for(Minimax.TreeNode ChildNode : root.getChildren()){
-            if(ChildNode.getScore() > maxScoreNode.getScore())
+            System.out.println("max score node: " + ChildNode.getScore());
+            System.out.println("max score node: " + ChildNode.getAlpha());
+            System.out.println("max score node: " + ChildNode.getBeta());
+
+            if(ChildNode.getScore() < maxScoreNode.getScore()){
+                System.out.println("max score:" + maxScoreNode.getScore());
+                System.out.println("childscore: " + ChildNode.getScore());
                 maxScoreNode = ChildNode;
+                System.out.println("final score: " + maxScoreNode.getScore());
+            }
+            System.out.println("-------");
         }
         return maxScoreNode.getMove();
     }
