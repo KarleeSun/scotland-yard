@@ -113,8 +113,6 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(@Nonnull Move move) {
-			// Advance the model with move, then notify all observers of what what just happened.
-			// you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
 			Observer.Event event;
 			gameState = gameState.advance(move); //update game state after move
 			currentBoard = getCurrentBoard();
