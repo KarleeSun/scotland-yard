@@ -45,16 +45,31 @@ public class Dijkstra {
         return dijkstraShortestDistance(s)[destination];
     }
 
+    //convert transportation to distance according the number of according ticket left from detectives
+    private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
+        return switch (t.toString()) {
+            case "TAXI" -> 2;
+            case "BUS" -> 3;
+            case "UNDERGROUND" -> 5;
+            default -> 1;
+        };
+    }
+
     private List<List<Node>> getAllAdjacentNodes(Board board) {
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
-        allAdjacentNodes.add(List.of(new Node(-1, -1)));
         ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph = board.getSetup().graph;
         //iterate through all vertex in the graph
         for (Integer vertex : graph.nodes()) {
             List<Node> adjOfOneVertex = new ArrayList<>();
             //iterate through all adjacent vertex of a vertex
             for (Integer adjVertex : graph.adjacentNodes(vertex)) {
-                adjOfOneVertex.add(new Node(adjVertex, 1));       /*make new node for adj vertex*/
+                List<Integer> transportWeights = new ArrayList<>();
+                //iterate through all possible transportation from vertex to adjVertex and convert to weight
+                for (ScotlandYard.Transport t : graph.edgeValueOrDefault(vertex, adjVertex, ImmutableSet.of())) {
+                    transportWeights.add(transportToDistance(board, t));
+                }
+                transportWeights.sort(Comparator.naturalOrder());
+                adjOfOneVertex.add(new Node(adjVertex, transportWeights.get(0)));       /*make new node for adj vertex*/
             }
             allAdjacentNodes.add(adjOfOneVertex);
         }
