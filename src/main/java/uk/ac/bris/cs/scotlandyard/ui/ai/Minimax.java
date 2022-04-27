@@ -151,7 +151,7 @@ public class Minimax {
         }
     }
 
-    public List<Integer> getmrxPossibleLocation(Board board) {
+    public List<Integer> getmrxPossibleLocation(Board board) { //得到mrX所有可能在的位置
         List<Integer> mrXPossibleLocation = new ArrayList<Integer>();
         for (Move m : board.getAvailableMoves()) {
             if (m instanceof Move.SingleMove) mrXPossibleLocation.add(((Move.SingleMove) m).destination);
@@ -160,7 +160,7 @@ public class Minimax {
         return mrXPossibleLocation;
     }
 
-    public int getDistance(List<Integer> possibles, Move move, Board board) {
+    public int getDistance(List<Integer> possibles, Move move, Board board) { //這個函數是detective的move到mrX的所有可能位置的距離
         Dijkstra dijkstra = new Dijkstra(board);
         List<Integer> distanceChange = new ArrayList<>();
         for (Integer possible : possibles) {
@@ -171,71 +171,6 @@ public class Minimax {
         return (int) distanceChange.stream().mapToDouble(Number::doubleValue).average().getAsDouble();
     }
 
-//    public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData) {
-//        Xbot xbot = new Xbot();
-//        depth--;
-//        int i = 0;
-//        int j = 0;
-//        ImmutableSet<Move> allPossibleMoves = board.getAvailableMoves();
-//        Set<Move> moves;
-//        Set<Move> singleMoves = new HashSet<>();
-//        Set<Move> doubleMoves = new HashSet<>();
-//        for (Move move : allPossibleMoves) {
-//            if (!(Boolean) xbot.getMoveInformation(move).get("useDouble")) singleMoves.add(move);
-//            else doubleMoves.add(move);
-//        }
-//        if (!useDoubleHere(board, gameData)) moves = singleMoves;
-//        else moves = doubleMoves;
-//        for (Move m : moves) { //对于mrX的每一个move
-//            i++;
-//            int destination = (int) xbot.getMoveInformation(m).get("destination");
-//            Player updateMrX = gameData.mrX.at(destination).use(m.tickets());
-//            Info newGameData = new Info(updateMrX, gameData.detectives.stream().toList());
-//            Score score = new Score();
-////            int s = score.giveScore(board, newGameData.mrX.location(), xbot.getLocAsList(newGameData.detectives), m.source(), m.tickets().iterator().next());
-//            Boolean useDouble = (Boolean) xbot.getMoveInformation(m).get("useDouble");
-//            Boolean useSecret = (Boolean) xbot.getMoveInformation(m).get("useSecret");
-//            TreeNode mrXNode = new TreeNode(m, -1, useDouble, useSecret, newGameData);
-//            System.out.println("or here?");
-//            mrXNode.setParent(node);
-//
-//            System.out.println("here??");
-//            List<List<Player>> allUpdatedDetectives = new ArrayList<>();
-//            for (Player detective : newGameData.detectives) { //对于每一个detective
-//                System.out.println("00000");
-//                List<Player> updatedOneDetective = new ArrayList<>();
-//                List<Move.SingleMove> oneDetectiveMove = xbot.makeSingleMoves(board.getSetup(), newGameData.detectives, detective, detective.location());
-//                for (Move.SingleMove singleMove : oneDetectiveMove) {
-//                    Dijkstra before = new Dijkstra(newGameData.mrX.location(), singleMove.source(), board);
-//                    Dijkstra after = new Dijkstra(newGameData.mrX.location(), singleMove.destination, board);
-//                    if (after.getDistance() < before.getDistance()) {
-//                        System.out.println("11111");
-//                        Player updateDetective = detective.at(singleMove.destination).use(singleMove.ticket).give(singleMove.ticket);
-//                        updatedOneDetective.add(updateDetective);
-//                    }
-//                }
-//                allUpdatedDetectives.add(updatedOneDetective);
-//            }
-//            System.out.println("22222");
-//            System.out.println("allUpdatedDetectives: " + allUpdatedDetectives);
-//            List<List<Player>> result = Lists.cartesianProduct(ImmutableList.copyOf(allUpdatedDetectives));
-//            System.out.println("result: " + result);
-//            System.out.println("result.size: " + result.size());
-//            for (List<Player> detectivesMoveOnce : result) {
-//                System.out.println("loop here?");
-//                j++;
-//                System.out.println("detective loop num: " + j);
-//                Info updateGameData = new Info(newGameData.mrX, detectivesMoveOnce);
-//                Score score1 = new Score();
-//                int s1 = score1.giveScore(board, updateGameData.mrX.location(), xbot.getLocAsList(updateGameData.detectives), m.source(), m.tickets().iterator().next());
-//                TreeNode detectivesNode = new TreeNode(mrXNode.move, s1, useDouble, useSecret, updateGameData);
-//                detectivesNode.setParent(mrXNode);
-//                System.out.println("depth: " + depth);
-////                    createTree(board,detectivesNode,depth,updateGameData);
-//            }
-//        }
-//
-//    }
 
 //    public Boolean useDoubleHere(@Nonnull Board board, Info gameData) {
 //        int turnNum = board.getMrXTravelLog().size();

@@ -153,7 +153,7 @@ public class Xbot implements Ai {
         return doubleAvailableMoves;
     }
 
-    public Map<String, Object> getMoveInformation(Move move){
+    public Map<String, Object> getMoveInformation(Move move){ //這個函數後期可以不要 簡化代碼
         System.out.println("move: "+ move);
         Minimax minimax = new Minimax();
         Map<String,Object> moveInfo = move.accept(new Move.Visitor<Map<String,Object>>(){
