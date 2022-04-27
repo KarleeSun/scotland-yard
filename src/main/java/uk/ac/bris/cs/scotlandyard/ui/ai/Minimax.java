@@ -74,14 +74,14 @@ public class Minimax {
         System.out.println("loaded");
         TreeNode root = new TreeNode(null, 0, gameData);
         root.nodeGameState = (Board.GameState) board;
-        createTree(board, root, depth, gameData);
+        createTree(board, root, depth, gameData, root);
         miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
         return root;
     }
 
     public List<Long> timeList = new ArrayList<>();
 
-    public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData) {
+    public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData, TreeNode root) {
         Score score = new Score();
         Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
@@ -101,13 +101,17 @@ public class Minimax {
                 int destination = move instanceof Move.SingleMove ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
                 long start = System.currentTimeMillis();
                 int distance = dijkstra.getDetectivesDistance(destination, xbot.getLocAsList(gameData.detectives)).get(0);
-                TreeNode newNode = new TreeNode(move, score.giveScore(board,gameData,move), null);
+                TreeNode newNode = new TreeNode(move, 0, null);
                 newNode.nodeGameState = node.nodeGameState;
                 node.shortestDistanceWithDetective = distance;
                 node.addChild(newNode);
                 newNode.setParent(node);
+                if(newNode.getParent().move != null){
+                    newNode.score = score.giveScore(board, gameData, move);
+                }
+
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(board, newNode, depth - 1, gameData);
+                createTree(board, newNode, depth - 1, gameData, root);
             }
 
         } else {
@@ -122,7 +126,7 @@ public class Minimax {
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(board, newNode, depth - 1, gameData);
+                createTree(board, newNode, depth - 1, gameData, root);
             }
         }
     }
