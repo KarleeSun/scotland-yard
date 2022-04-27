@@ -10,8 +10,6 @@ import io.atlassian.fugue.Pair;
 
 import uk.ac.bris.cs.scotlandyard.model.*;
 
-import static uk.ac.bris.cs.scotlandyard.ui.ai.Minimax.MAX;
-import static uk.ac.bris.cs.scotlandyard.ui.ai.Minimax.MIN;
 
 /*
     是要给每个选择一个分数

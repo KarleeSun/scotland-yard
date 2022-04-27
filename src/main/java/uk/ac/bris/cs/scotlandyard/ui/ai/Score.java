@@ -6,23 +6,22 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static uk.ac.bris.cs.scotlandyard.ui.ai.Minimax.mrX;
-
 public class Score {
     //只給mrX打分 也只在mrX的層給分
+    //並且只能用於singleMove
     //一個問題：隨著距離的變化距離比重會越來越小 但比重應該很大
     public Score() { }
 
-    public int giveScore(@Nonnull Board board, Minimax.Info gameData, Move Move){ //這個函數就是最終給分的函數
-        //如果是mrX的輪 那就只傳進來一個move就行了，如果是detectives的輪，那麼move是detective的move，additionalMove是null
-        return 0;
+    public int giveScore(@Nonnull Board board, Minimax.Info gameData, Move move){ //這個函數就是最終給分的函數
+        Dijkstra dijkstra = new Dijkstra(board);
+        return distanceScore(gameData,move,dijkstra)*5 + transportationScore(board,move.source())
+                + guessPossibilityScore(board,move.source(),((Move.SingleMove)move).ticket) + edgeScore(move, dijkstra);
     }
 
-    public int distanceScore(@Nonnull Board board, Minimax.Info gameData, Move move, Dijkstra dijkstra){ //根據距離給分
+    public int distanceScore(Minimax.Info gameData, Move move, Dijkstra dijkstra){ //根據距離給分
         Xbot xbot = new Xbot();
         List<Integer> distance = dijkstra.getDetectivesDistance(getDestination(move), xbot.getLocAsList(gameData.detectives));
         int shortest = distance.get(0);
