@@ -33,7 +33,7 @@ public class Test1 {
                 mrX, red, green, blue, white, yellow);
         Minimax minimax = new Minimax();
         long start = System.currentTimeMillis();
-        Minimax.TreeNode root = minimax.tree(state, 3, null);
+        Minimax.TreeNode root = minimax.tree(state, 3, new Minimax.Info(mrX,List.of(red,green,blue,white,yellow)));
         System.out.println("Time use: " + (System.currentTimeMillis() - start) + "ms");
         Map<Integer, List<Minimax.TreeNode>> buffer = new HashMap<>();
         countNode(root, buffer, 0);
