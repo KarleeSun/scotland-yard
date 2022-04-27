@@ -26,22 +26,18 @@ public class Minimax {
         public int beta = MAX;
         private TreeNode parent;
         private List<TreeNode> children;
-        private Boolean useDouble; //用没用double卡（singlemove or doublemove）
-        private Boolean useSecret;
         private Info gameData;
         public Board.GameState nodeGameState; // 这玩意记得改掉变量名
         public int distance;
         public int shortestDistanceWithDetective;
 
 
-        public TreeNode(Move move, int score, Boolean useDouble, Boolean useSecret, Info gameData) {
+        public TreeNode(Move move, int score,Info gameData) {
             this.move = move;
             this.score = score;
             this.alpha = MIN;
             this.beta = MAX;
             this.children = new ArrayList<>();
-            this.useDouble = useDouble; //有没有用double卡
-            this.useSecret = useSecret; //有没有用secret卡
             this.gameData = gameData;
         }
 
@@ -51,7 +47,7 @@ public class Minimax {
         }
 
         public void addChild(Move move, int score, Boolean useDouble, Boolean useSecret, Info gameData) {
-            TreeNode child = new TreeNode(move, score, useDouble, useSecret, gameData);
+            TreeNode child = new TreeNode(move, score,gameData);
             this.children.add(child);
             if (!child.parent.equals(this)) child.setParent(this);
         }
@@ -92,7 +88,7 @@ public class Minimax {
     //detectivesPlayer: Player类型的detectives
     public TreeNode tree(@Nonnull Board board, int depth, Info gameData) {
         System.out.println("loaded");
-        TreeNode root = new TreeNode(null, 0, false, false, gameData);
+        TreeNode root = new TreeNode(null, 0, gameData);
         root.nodeGameState = (Board.GameState) board;
         createTree(root, depth, gameData);
         miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -125,7 +121,7 @@ public class Minimax {
                 int destination = move instanceof Move.SingleMove ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
                 long start = System.currentTimeMillis();
                 int distance = dijkstra.getDetectivesDistance(destination, xbot.getLocAsList(gameData.detectives)).get(0);
-                TreeNode newNode = new TreeNode(move, distance, false, false, null);
+                TreeNode newNode = new TreeNode(move, distance, null);
                 newNode.nodeGameState = node.nodeGameState;
                 node.shortestDistanceWithDetective = distance;
                 node.addChild(newNode);
@@ -140,7 +136,7 @@ public class Minimax {
                 List<Integer> possibles = getmrxPossibleLocation(node.nodeGameState);
                 int distance = dijkstra.getDistance(gameData.mrX.location(), ((Move.SingleMove) move).destination);
 //                int distance = getDistance(possibles, move, node.nodeGameState);
-                TreeNode newNode = new TreeNode(move, distance, false, false, null);
+                TreeNode newNode = new TreeNode(move, distance, null);
                 newNode.nodeGameState = node.nodeGameState;
                 node.shortestDistanceWithDetective = distance;
                 node.addChild(newNode);

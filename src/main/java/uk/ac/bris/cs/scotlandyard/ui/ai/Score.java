@@ -63,9 +63,9 @@ public class Score {
     }
 
     public int getDestination(Move move){
-        int destination = move instanceof Move.SingleMove
+        int distance = move instanceof Move.SingleMove
             ? ((Move.SingleMove)move).destination : ((Move.DoubleMove)move).destination2;
-        return destination;
+        return distance;
     }
 
 }

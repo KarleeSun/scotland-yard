@@ -62,6 +62,10 @@ public class Xbot implements Ai {
     @Nonnull
     @Override
     public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
+        //double 和 secret 單獨處理
+        //距離特別近的時候也用double和secret
+        //reveal後一輪用double和secret
+        //其餘時候用minimax
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
@@ -101,96 +105,6 @@ public class Xbot implements Ai {
         return detectiveTickets;
     }
 
-    public List<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives,
-                                                 Player player, int source) {
-        Set<Move.SingleMove> possibleMoves = Sets.newHashSet();
-        Set<Integer> destination = setup.graph.adjacentNodes(source);
-        for (int d : destination) {
-            boolean notOccupied = true;          /* node not occupied by detectives*/
-            for (Player detective : detectives) {
-                if (detective.location() == d) {
-                    notOccupied = false;
-                    break;
-                }
-            }
-            //iterate through set containing all possible transportation from source to destination
-            if (notOccupied) {
-                for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, d, ImmutableSet.of())) {
-                    if (player.hasAtLeast(t.requiredTicket(), 1)) {
-                        possibleMoves.add(new Move.SingleMove(player.piece(), source, t.requiredTicket(), d));
-                    }
-                }
-            }
-        }
-        return possibleMoves.stream().toList();
-    }
-
-    private Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup,
-                                                        List<Player> detectives,
-                                                        Player player,
-                                                        int source) {
-        if(!player.hasAtLeast(ScotlandYard.Ticket.DOUBLE,1)) return new HashSet<>();
-        Set<Move.DoubleMove> doubleAvailableMoves = new HashSet<>();
-        //store all available first move by invoke makeSingleMove method
-        List<Move.SingleMove> firstAvailableMoves = new ArrayList<>(makeSingleMoves(setup, detectives, player, source));
-        //iterate through all possible single moves and store its corresponding second move
-        for (Move.SingleMove firstMove : firstAvailableMoves){
-            /* store second available moves*/
-            List<Move.SingleMove> secondAvailableMoves = new ArrayList<>(
-                    makeSingleMoves(setup, detectives, player, firstMove.destination));
-            //iterate through all possible second move for a particular first move and create new double move and store it
-            ScotlandYard.Ticket ticketUsed = firstMove.ticket;
-            Integer ticketLeft = player.tickets().get(ticketUsed);
-            if (!secondAvailableMoves.isEmpty()) {
-                for (Move.SingleMove secondMove : secondAvailableMoves) {
-                    if (!(secondMove.ticket == ticketUsed) || ticketLeft >= 2) {
-                        doubleAvailableMoves.add( new Move.DoubleMove(player.piece(), firstMove.source(),
-                                firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination));
-                    }
-                }
-            }
-        }
-        return doubleAvailableMoves;
-    }
-
-    public Map<String, Object> getMoveInformation(Move move){ //這個函數後期可以不要 簡化代碼
-        System.out.println("move: "+ move);
-        Minimax minimax = new Minimax();
-        Map<String,Object> moveInfo = move.accept(new Move.Visitor<Map<String,Object>>(){
-            Map<String, Object> moveInfo = new HashMap<>();
-            @Override
-            public Map<String,Object> visit(Move.SingleMove singleMove){
-                System.out.println("singleMove: "+ singleMove);
-//                System.out.println("moveInfo： "+moveInfo);
-                //moveInfo = Map.of()可以将多个元素一次性添加进去
-                moveInfo.put("useDouble",false);
-                moveInfo.put("piece",singleMove.commencedBy());
-                moveInfo.put("source",singleMove.source());
-                moveInfo.put("ticket",singleMove.ticket);
-                moveInfo.put("destination",singleMove.destination);
-                moveInfo.put("useSecret",false);
-                if(singleMove.ticket == ScotlandYard.Ticket.SECRET) moveInfo.put("useSecret",true);
-                System.out.println("Move info: "+moveInfo);
-                return moveInfo;
-            }
-            @Override
-            public Map<String,Object> visit(Move.DoubleMove doubleMove){
-                System.out.println("doublemove: "+doubleMove);
-                moveInfo.put("useDouble",true);
-                moveInfo.put("piece",doubleMove.commencedBy());
-                moveInfo.put("source",doubleMove.source());
-                moveInfo.put("ticket1",doubleMove.ticket1);
-                moveInfo.put("destination1",doubleMove.destination1);
-                moveInfo.put("ticket2",doubleMove.ticket2);
-                moveInfo.put("destination",doubleMove.destination2);
-                moveInfo.put("useSecret",false);
-                if(doubleMove.ticket1 == ScotlandYard.Ticket.SECRET || doubleMove.ticket2 == ScotlandYard.Ticket.SECRET)
-                    moveInfo.put("useSecret",true);
-                return moveInfo;
-            }
-        });
-        return moveInfo;
-    }
 
     public List<Integer> getLocAsList(List<Player> detectivesPlayer){
         List<Integer> detectivesLoc = new ArrayList<>();

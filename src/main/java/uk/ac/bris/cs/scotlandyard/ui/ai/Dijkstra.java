@@ -2,7 +2,6 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.ImmutableValueGraph;
 import uk.ac.bris.cs.scotlandyard.model.Board;
-import uk.ac.bris.cs.scotlandyard.model.Piece;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard;
 
 import javax.annotation.Nonnull;
@@ -46,24 +45,6 @@ public class Dijkstra {
         return dijkstraShortestDistance(s)[destination];
     }
 
-    //convert transportation to distance according the number of according ticket left from detectives
-    private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
-        Xbot xbot = new Xbot();
-        List<Piece.Detective> detectives = new ArrayList<>(xbot.getAllDetectives(board));
-        int[] ticketsCount = new int[]{0, 0, 0};
-        for (Piece.Detective detective : detectives) {
-            ticketsCount[0] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.TAXI);
-            ticketsCount[1] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.BUS);
-            ticketsCount[2] += board.getPlayerTickets(detective).get().getCount(ScotlandYard.Ticket.UNDERGROUND);
-        }
-        return switch (t.toString()) {
-//            case "TAXI" -> 100 / ticketsCount[0];
-//            case "BUS" -> 100 / ticketsCount[1];
-//            case "UNDERGROUND" -> 100 / ticketsCount[2];
-            default -> 1;
-        };
-    }
-
     private List<List<Node>> getAllAdjacentNodes(Board board) {
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
         allAdjacentNodes.add(List.of(new Node(-1, -1)));
@@ -73,13 +54,7 @@ public class Dijkstra {
             List<Node> adjOfOneVertex = new ArrayList<>();
             //iterate through all adjacent vertex of a vertex
             for (Integer adjVertex : graph.adjacentNodes(vertex)) {
-                List<Integer> transportWeights = new ArrayList<>();
-                //iterate through all possible transportation from vertex to adjVertex and convert to weight
-                for (ScotlandYard.Transport t : graph.edgeValueOrDefault(vertex, adjVertex, ImmutableSet.of())) {
-                    transportWeights.add(transportToDistance(board, t));
-                }
-                transportWeights.sort(Comparator.naturalOrder());
-                adjOfOneVertex.add(new Node(adjVertex, transportWeights.get(0)));       /*make new node for adj vertex*/
+                adjOfOneVertex.add(new Node(adjVertex, 1));       /*make new node for adj vertex*/
             }
             allAdjacentNodes.add(adjOfOneVertex);
         }
