@@ -137,16 +137,6 @@ public class Minimax {
     }
 
 
-//    public Boolean useDoubleHere(@Nonnull Board board, Info gameData) {
-//        int turnNum = board.getMrXTravelLog().size();
-//        if (turnNum > 0 && board.getSetup().moves.get(turnNum)) return true;
-//        Xbot xbot = new Xbot();
-//        Dijkstra dijkstra = new Dijkstra(gameData.mrX.location(), xbot.getLocAsList(gameData.detectives), board);
-//        if (dijkstra.getDetectivesDistance().get(0) < 2) return true;
-//        return false;
-//    }
-
-
     //最终把最好的move传给root存到root的move里
     public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta) {
         if (node.children.isEmpty()) {
