@@ -35,20 +35,20 @@ public class Test1 {
         long start = System.currentTimeMillis();
         Minimax.TreeNode root = minimax.tree(state, 3, null);
         System.out.println("Time use: " + (System.currentTimeMillis() - start) + "ms");
-        Map<Integer, List<Minimax.TreeNode>> shitbuffer = new HashMap<>();
-        countShit(root, shitbuffer, 0);
-        for (Map.Entry<Integer, List<Minimax.TreeNode>> shit : shitbuffer.entrySet()) {
-            System.out.println("    depth: " + shit.getKey() + " size:" + shit.getValue().size());
+        Map<Integer, List<Minimax.TreeNode>> gsbuffer = new HashMap<>();
+        countgs(root, gsbuffer, 0);
+        for (Map.Entry<Integer, List<Minimax.TreeNode>> gs : gsbuffer.entrySet()) {
+            System.out.println("    depth: " + gs.getKey() + " size:" + gs.getValue().size());
         }
         System.out.println("avg distance use:" + minimax.timeList.stream().mapToLong(t -> t).average().orElseThrow() + "ms");
     }
 
-    public void countShit(Minimax.TreeNode node, Map<Integer, List<Minimax.TreeNode>> buffer, int depth) {
+    public void countgs(Minimax.TreeNode node, Map<Integer, List<Minimax.TreeNode>> buffer, int depth) {
         List<Minimax.TreeNode> children = node.getChildren();
         buffer.putIfAbsent(depth, new ArrayList<>());
         buffer.get(depth).addAll(children);
         children.forEach(child -> {
-            countShit(child, buffer, depth + 1);
+            countgs(child, buffer, depth + 1);
         });
     }
 
