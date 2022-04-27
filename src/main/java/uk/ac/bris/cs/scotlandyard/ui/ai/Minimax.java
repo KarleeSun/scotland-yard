@@ -74,14 +74,15 @@ public class Minimax {
         System.out.println("loaded");
         TreeNode root = new TreeNode(null, 0, gameData);
         root.nodeGameState = (Board.GameState) board;
-        createTree(root, depth, gameData);
+        createTree(board, root, depth, gameData);
         miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
         return root;
     }
 
     public List<Long> timeList = new ArrayList<>();
 
-    public void createTree(TreeNode node, int depth, Info gameData) {
+    public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData) {
+        Score score = new Score();
         Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
         List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
@@ -100,13 +101,13 @@ public class Minimax {
                 int destination = move instanceof Move.SingleMove ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
                 long start = System.currentTimeMillis();
                 int distance = dijkstra.getDetectivesDistance(destination, xbot.getLocAsList(gameData.detectives)).get(0);
-                TreeNode newNode = new TreeNode(move, distance, null);
+                TreeNode newNode = new TreeNode(move, score.giveScore(board,gameData,move), null);
                 newNode.nodeGameState = node.nodeGameState;
                 node.shortestDistanceWithDetective = distance;
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(newNode, depth - 1, gameData);
+                createTree(board, newNode, depth - 1, gameData);
             }
 
         } else {
@@ -121,7 +122,7 @@ public class Minimax {
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(newNode, depth - 1, gameData);
+                createTree(board, newNode, depth - 1, gameData);
             }
         }
     }

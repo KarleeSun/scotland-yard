@@ -17,8 +17,13 @@ public class Score {
 
     public int giveScore(@Nonnull Board board, Minimax.Info gameData, Move move){ //這個函數就是最終給分的函數
         Dijkstra dijkstra = new Dijkstra(board);
-        return distanceScore(gameData,move,dijkstra)*5 + transportationScore(board,move.source())
-                + guessPossibilityScore(board,move.source(),((Move.SingleMove)move).ticket) + edgeScore(move, dijkstra);
+        if(move instanceof Move.SingleMove) {
+            return distanceScore(gameData, move, dijkstra) * 5 + transportationScore(board, move.source())
+                    + guessPossibilityScore(board, move.source(), ((Move.SingleMove) move).ticket) + edgeScore(move, dijkstra);
+        } else {
+            return distanceScore(gameData, move, dijkstra) * 5 + transportationScore(board, move.source())
+                    + guessPossibilityScore(board, move.source(), ((Move.DoubleMove) move).ticket2) + edgeScore(move, dijkstra);
+        }
     }
 
     public int distanceScore(Minimax.Info gameData, Move move, Dijkstra dijkstra){ //根據距離給分

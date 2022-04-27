@@ -64,6 +64,7 @@ public class Xbot implements Ai {
         //距離特別近的時候也用double和secret
         //reveal後一輪用double和secret
         //其餘時候用minimax
+        //在Dijkstra裡面給不同的交通工具賦不同權重
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
