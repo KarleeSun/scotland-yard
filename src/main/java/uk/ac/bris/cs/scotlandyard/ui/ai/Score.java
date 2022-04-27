@@ -66,5 +66,4 @@ public class Score {
             ? ((Move.SingleMove)move).destination : ((Move.DoubleMove)move).destination2;
         return distance;
     }
-
 }
