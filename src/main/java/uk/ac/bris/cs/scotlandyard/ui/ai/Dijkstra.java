@@ -48,9 +48,10 @@ public class Dijkstra {
     //convert transportation to distance according the number of according ticket left from detectives
     private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
         return switch (t.toString()) {
-            case "TAXI" -> 2;
-            case "BUS" -> 3;
-            case "UNDERGROUND" -> 5;
+            case "TAXI" -> 1;
+            case "BUS" -> 5;
+            case "UNDERGROUND" -> 8;
+            case "FERRY" -> 12;
             default -> 1;
         };
     }
