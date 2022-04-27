@@ -29,9 +29,9 @@ public class Minimax {
         private Boolean useDouble; //用没用double卡（singlemove or doublemove）
         private Boolean useSecret;
         private Info gameData;
-        public Board.GameState gs; // 这玩意记得改掉变量名
+        public Board.GameState nodeGameState; // 这玩意记得改掉变量名
         public int distance;
-        public int vgs;
+        public int shortestDistanceWithDetective;
 
 
         public TreeNode(Move move, int score, Boolean useDouble, Boolean useSecret, Info gameData) {
@@ -93,7 +93,7 @@ public class Minimax {
     public TreeNode tree(@Nonnull Board board, int depth, Info gameData) {
         System.out.println("loaded");
         TreeNode root = new TreeNode(null, 0, false, false, gameData);
-        root.gs = (Board.GameState) board;
+        root.nodeGameState = (Board.GameState) board;
         createTree(root, depth, gameData);
         miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
         return root;
@@ -102,10 +102,10 @@ public class Minimax {
     public List<Long> timeList = new ArrayList<>();
 
     public void createTree(TreeNode node, int depth, Info gameData) {
-        Dijkstra dijkstra = new Dijkstra(node.gs);
+        Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
-        List<Move> moves = new ArrayList<>(node.gs.getAvailableMoves().stream().toList());
-        moves.removeIf(move -> move instanceof Move.DoubleMove);
+        List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
+//        moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
             for (ScotlandYard.Ticket ticket : move.tickets())
@@ -126,8 +126,8 @@ public class Minimax {
                 long start = System.currentTimeMillis();
                 int distance = dijkstra.getDetectivesDistance(destination, xbot.getLocAsList(gameData.detectives)).get(0);
                 TreeNode newNode = new TreeNode(move, distance, false, false, null);
-                newNode.gs = node.gs;
-                node.vgs = distance;
+                newNode.nodeGameState = node.nodeGameState;
+                node.shortestDistanceWithDetective = distance;
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
@@ -137,12 +137,12 @@ public class Minimax {
         } else {
             for (Move move : moves) {
                 long start = System.currentTimeMillis();
-                List<Integer> possibles = getmrxPossibleLocation(node.gs);
+                List<Integer> possibles = getmrxPossibleLocation(node.nodeGameState);
                 int distance = dijkstra.getDistance(gameData.mrX.location(), ((Move.SingleMove) move).destination);
-//                int distance = getDistance(possibles, move, node.gs);
+//                int distance = getDistance(possibles, move, node.nodeGameState);
                 TreeNode newNode = new TreeNode(move, distance, false, false, null);
-                newNode.gs = node.gs;
-                node.vgs = distance;
+                newNode.nodeGameState = node.nodeGameState;
+                node.shortestDistanceWithDetective = distance;
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
@@ -253,45 +253,45 @@ public class Minimax {
             return node;
         }
         int v = node.score;
-        List<TreeNode> gss = new ArrayList<>();
+        List<TreeNode> nodes = new ArrayList<>();
         if (maximizing) {
             for (int i = 0; i < node.children.size(); i++) {
-                TreeNode gs1 = node.children.get(i);
+                TreeNode currentNode = node.children.get(i);
                 if (beta <= alpha)
-                    gsPruning(gs1);
-                TreeNode scoreNode = miniMaxAlphaBeta(gs1, depth + 1, false, alpha, beta);
-                v = Math.max(v, scoreNode.vgs);
+                    nodePruning(currentNode);
+                TreeNode scoreNode = miniMaxAlphaBeta(currentNode, depth + 1, false, alpha, beta);
+                v = Math.max(v, scoreNode.shortestDistanceWithDetective);
                 alpha = Math.max(v, alpha);
-                gs1.vgs = v;
-                gs1.alpha = alpha;
-                gss.add(gs1);
+                currentNode.shortestDistanceWithDetective = v;
+                currentNode.alpha = alpha;
+                nodes.add(currentNode);
             }
         } else {
             for (int i = 0; i < node.children.size(); i++) {
-                TreeNode gs1 = node.children.get(i);
+                TreeNode currentNode = node.children.get(i);
                 if (beta <= alpha)
-                    gsPruning(gs1);
-                TreeNode scoreNode = miniMaxAlphaBeta(gs1, depth + 1, true, alpha, beta);
-                v = Math.min(v, scoreNode.vgs);
+                    nodePruning(currentNode);
+                TreeNode scoreNode = miniMaxAlphaBeta(currentNode, depth + 1, true, alpha, beta);
+                v = Math.min(v, scoreNode.shortestDistanceWithDetective);
                 beta = Math.min(v, beta);
-                gs1.vgs = v;
-                gs1.beta = beta;
-                gss.add(gs1);
+                currentNode.shortestDistanceWithDetective = v;
+                currentNode.beta = beta;
+                nodes.add(currentNode);
             }
         }
-        return Collections.max(gss, Comparator.comparingInt(gs -> gs.vgs));
+        return Collections.max(nodes, Comparator.comparingInt(n -> n.shortestDistanceWithDetective));
     }
 
-    public void gsPruning(TreeNode gsNode) {
-        List<TreeNode> gss = gsNode.children;
-        for (TreeNode gs : gss) {
-            gsPruning(gs);
+    public void nodePruning(TreeNode parentNode) {
+        List<TreeNode> childrenNode = parentNode.children;
+        for (TreeNode child : childrenNode) {
+            nodePruning(child);
         }
-        gsNode.gs = null;
-        gsNode.children.clear();
-        gsNode.gameData = null;
-        gsNode.move = null;
-        gsNode.parent = null;
+        parentNode.nodeGameState = null;
+        parentNode.children.clear();
+        parentNode.gameData = null;
+        parentNode.move = null;
+        parentNode.parent = null;
     }
 
 
