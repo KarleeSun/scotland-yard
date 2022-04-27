@@ -22,7 +22,7 @@ public class Test1 {
     private ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> defaultGraph;
 
     @Test
-    public void faq() {
+    public void testForMiniMax() {
         var mrX = new Player(MRX, defaultMrXTickets(), 106);
         var red = new Player(RED, defaultDetectiveTickets(), 91);
         var green = new Player(GREEN, defaultDetectiveTickets(), 29);
@@ -35,20 +35,20 @@ public class Test1 {
         long start = System.currentTimeMillis();
         Minimax.TreeNode root = minimax.tree(state, 3, null);
         System.out.println("Time use: " + (System.currentTimeMillis() - start) + "ms");
-        Map<Integer, List<Minimax.TreeNode>> shitbuffer = new HashMap<>();
-        countShit(root, shitbuffer, 0);
-        for (Map.Entry<Integer, List<Minimax.TreeNode>> shit : shitbuffer.entrySet()) {
-            System.out.println("    depth: " + shit.getKey() + " size:" + shit.getValue().size());
+        Map<Integer, List<Minimax.TreeNode>> buffer = new HashMap<>();
+        countNode(root, buffer, 0);
+        for (Map.Entry<Integer, List<Minimax.TreeNode>> layer : buffer.entrySet()) {
+            System.out.println("    depth: " + layer.getKey() + " size:" + layer.getValue().size());
         }
         System.out.println("avg distance use:" + minimax.timeList.stream().mapToLong(t -> t).average().orElseThrow() + "ms");
     }
 
-    public void countShit(Minimax.TreeNode node, Map<Integer, List<Minimax.TreeNode>> buffer, int depth) {
+    public void countNode(Minimax.TreeNode node, Map<Integer, List<Minimax.TreeNode>> buffer, int depth) {
         List<Minimax.TreeNode> children = node.getChildren();
         buffer.putIfAbsent(depth, new ArrayList<>());
         buffer.get(depth).addAll(children);
         children.forEach(child -> {
-            countShit(child, buffer, depth + 1);
+            countNode(child, buffer, depth + 1);
         });
     }
 
