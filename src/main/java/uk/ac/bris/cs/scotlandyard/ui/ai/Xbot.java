@@ -46,24 +46,41 @@ public class Xbot implements Ai {
         //reveal後一輪用double和secret
         //其餘時候用minimax
         //在Dijkstra裡面給不同的交通工具賦不同權重
+        //只有离太近的时候用double，afterReveal用Secret
+        //before reveal 不能用double
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
-        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size());
-        Boolean tooClose = (dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)).get(0) <= 2);
-        Boolean hasTicket = gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) && gameData.mrX.has(ScotlandYard.Ticket.SECRET);
+        Boolean beforeReveal = board.getSetup().moves.get(board.getMrXTravelLog().size()+1) || board.getSetup().moves.get(board.getMrXTravelLog().size()+2);
+        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size()>1? board.getMrXTravelLog().size()-1 : 0);
+        Boolean tooClose = (dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)).get(0) <= 1);
+        Boolean hasTicket = gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) || gameData.mrX.has(ScotlandYard.Ticket.SECRET);
         if((afterReveal || tooClose) && hasTicket){
             System.out.println("situation 1");
-            List<Move> moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
-            Move.DoubleMove bestDoubleMove = null;
+            List<Move> moves = List.copyOf(board.getAvailableMoves().asList());
+            if(tooClose) {
+                moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove)
+                        .filter(m -> (((Move.DoubleMove) m).ticket1 == ScotlandYard.Ticket.SECRET || ((Move.DoubleMove) m).ticket2 == ScotlandYard.Ticket.SECRET)).toList();
+            } else {
+                moves.stream().filter(move -> move instanceof Move.SingleMove);
+                moves.stream().filter(move -> {
+                    List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+                    for (ScotlandYard.Ticket ticket : move.tickets())
+                        tickets.add(ticket);
+                    return tickets.contains(ScotlandYard.Ticket.SECRET);
+                });
+            }
+            Move bestMove = null;
             int furthestMoveDistance = 0;
             for(Move move: moves){
-                if(dijkstra.getDetectivesDistance(((Move.DoubleMove)move).destination2, getLocAsList(gameData.detectives)).get(0) > furthestMoveDistance){
-                    bestDoubleMove = (Move.DoubleMove)move;
+                int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
+                if(currentDistance > furthestMoveDistance){
+                    furthestMoveDistance = currentDistance;
+                    bestMove = move;
                 }
             }
-            return bestDoubleMove;
+            return bestMove;
             
 //            Map<Move,Integer> movesWithDistances = new HashMap<>();
 //            for(Move move: moves){
@@ -131,6 +148,12 @@ public class Xbot implements Ai {
             detectivePlayers.add(detective);
         }
         return detectivePlayers;
+    }
+
+    public int getDestination(Move move){
+        int distance = move instanceof Move.SingleMove
+                ? ((Move.SingleMove)move).destination : ((Move.DoubleMove)move).destination2;
+        return distance;
     }
 
 }
