@@ -15,20 +15,11 @@ public class Score {
     }
 
     public int giveScore(@Nonnull Board board, Minimax.Info gameData, Move move) { //這個函數就是最終給分的函數
-        System.out.println("move: " + move);
-        System.out.println("moves: " + move);
         Dijkstra dijkstra = new Dijkstra(board);
         int score;
-        if (move instanceof Move.SingleMove) {
-            score = distanceScore(gameData, move, dijkstra) * 10 + transportationScore(board, move.source())
-                    + guessPossibilityScore(board, move.source(), ((Move.SingleMove) move).ticket)
-                    + 10 * edgeScore(move, dijkstra) + transportScore((Move.SingleMove) move);
-        } else {
-            score = distanceScore(gameData, move, dijkstra) * 10 + transportationScore(board, move.source())
-                    + guessPossibilityScore(board, move.source(), ((Move.DoubleMove) move).ticket2)
-                    + 10 * edgeScore(move, dijkstra) + transportScore((Move.SingleMove) move);
-        }
-        System.out.println("score: " + score);
+        score = distanceScore(gameData, move, dijkstra) * 10 + transportationScore(board, move.source())
+                + guessPossibilityScore(board, move.source(), ((Move.SingleMove) move).ticket)
+                + 10 * edgeScore(move, dijkstra) + transportScore((Move.SingleMove) move);
         return score;
     }
 
@@ -37,8 +28,6 @@ public class Score {
         List<Integer> distance = dijkstra.getDetectivesDistance(getDestination(move), xbot.getLocAsList(gameData.detectives));
         int shortest = distance.get(0);
         int average = (int) distance.stream().mapToDouble(Number::doubleValue).average().getAsDouble();
-        System.out.println("distance score: " + (shortest * 10 + average));
-        if(shortest < 3) return shortest*10000;
         return shortest * 10 + average;
     }
 
@@ -48,7 +37,6 @@ public class Score {
         for (Integer i : board.getSetup().graph.adjacentNodes(loc)) {
             transportationTypeNum += board.getSetup().graph.edgeValueOrDefault(loc, i, ImmutableSet.of()).size();
         }
-        System.out.println("transportation score: " + (int) (2 * adjacentNodesNum + transportationTypeNum));
         return (int) (2 * adjacentNodesNum + transportationTypeNum); //先这么设置，不合适再改
     }
 
@@ -63,13 +51,11 @@ public class Score {
                 }
             }
         }
-        System.out.println("possible score: " + 5 * possibleScore);
         return 5 * possibleScore;
     }
 
     public int edgeScore(Move move, Dijkstra dijkstra) {
         List<Integer> edgeList = List.of(8, 189, 6, 175, 4, 197);
-        System.out.println("edge score: " + 5 * dijkstra.getDetectivesDistance(getDestination(move), edgeList).get(0));
         return 5 * dijkstra.getDetectivesDistance(getDestination(move), edgeList).get(0);
     }
 

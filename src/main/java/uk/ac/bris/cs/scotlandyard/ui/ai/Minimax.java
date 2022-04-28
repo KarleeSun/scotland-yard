@@ -14,12 +14,12 @@ public class Minimax {
     public class TreeNode {
         private Move move;
         private int score;
-        public int alpha = MIN;
-        public int beta = MAX;
+        public int alpha;
+        public int beta;
         private TreeNode parent;
         private List<TreeNode> children;
         private Info gameData;
-        public Board.GameState nodeGameState; // 这玩意记得改掉变量名
+        public Board.GameState nodeGameState;
         public int shortestDistanceWithDetective;
 
 
@@ -59,14 +59,14 @@ public class Minimax {
         public List<TreeNode> getChildren() {
             return children;
         }
-
     }
 
-
-    //xPlayer是Player类型的mrX
-    //detectivesPlayer: Player类型的detectives
+    /**
+     * create game tree based on current game state
+     * pass in for minimax with alpha-beta pruning
+     * return the root of game state
+     */
     public TreeNode tree(@Nonnull Board board, int depth, Info gameData) {
-        System.out.println("loaded");
         TreeNode root = new TreeNode(null, 0, gameData);
         root.nodeGameState = (Board.GameState) board;
         createTree(board, root, depth, gameData, root);
@@ -74,16 +74,14 @@ public class Minimax {
         return root;
     }
 
-    public List<Long> timeList = new ArrayList<>();
+    public List<Long> timeList = new ArrayList<>();     /*for test purposes*/
 
     public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData, TreeNode root) {
         Score score = new Score();
         Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
         List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
-        List<Move> movesCopy = moves;
-        movesCopy.removeIf(move-> dijkstra.getDetectivesDistance(xbot.getDestination(move),xbot.getLocAsList(gameData.detectives)).get(0) <= 1);
-        if(!movesCopy.isEmpty()) moves = movesCopy;
+        //only consider single moves
         moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
             List<ScotlandYard.Ticket> tickets = new ArrayList<>();
@@ -91,40 +89,22 @@ public class Minimax {
                 tickets.add(ticket);
             return tickets.contains(ScotlandYard.Ticket.SECRET);
         });
-        if (moves.size() <= 0 || depth <= 0)
-            return;
-        if (moves.get(0).commencedBy().isMrX()) {
-            for (Move move : moves) {
-                int destination = move instanceof Move.SingleMove ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
-                long start = System.currentTimeMillis();
-                int distance = dijkstra.getDetectivesDistance(destination, xbot.getLocAsList(gameData.detectives)).get(0);
-                TreeNode newNode = new TreeNode(move, 0, null);
-                newNode.nodeGameState = node.nodeGameState;
-                node.shortestDistanceWithDetective = distance;
-                node.addChild(newNode);
-                newNode.setParent(node);
-                if(newNode.getParent().move != null){
-                    newNode.score = score.giveScore(board, gameData, move);
-                }
+        //if already recurred to desired depth then return
+        if (moves.size() <= 0 || depth <= 0) return;
+        for (Move move : moves) {
+            int destination = ((Move.SingleMove) move).destination;
+            long start = System.currentTimeMillis();
+            int distance = dijkstra.getDetectivesDistance(destination, xbot.getLocAsList(gameData.detectives)).get(0);
+            TreeNode newNode = new TreeNode(move, 0, null);
+            newNode.nodeGameState = node.nodeGameState;
+            node.shortestDistanceWithDetective = distance;
+            node.addChild(newNode);
+            newNode.setParent(node);
+            newNode.score = score.giveScore(board, gameData, move);
+            System.out.println("newNode.score: "+newNode.score);
 
-                timeList.add(System.currentTimeMillis() - start);
-                createTree(board, newNode, depth - 1, gameData, root);
-            }
-
-        } else {
-            for (Move move : moves) {
-                long start = System.currentTimeMillis();
-                List<Integer> possibles = getMrxPossibleLocation(node.nodeGameState);
-                int distance = dijkstra.getDistance(gameData.mrX.location(), ((Move.SingleMove) move).destination);
-//                int distance = getDistance(possibles, move, node.nodeGameState);
-                TreeNode newNode = new TreeNode(move, distance, null);
-                newNode.nodeGameState = node.nodeGameState;
-                node.shortestDistanceWithDetective = distance;
-                node.addChild(newNode);
-                newNode.setParent(node);
-                timeList.add(System.currentTimeMillis() - start);
-                createTree(board, newNode, depth - 1, gameData, root);
-            }
+            timeList.add(System.currentTimeMillis() - start);
+            createTree(board, newNode, depth - 1, gameData, root);
         }
     }
 
@@ -155,6 +135,7 @@ public class Minimax {
                 alpha = Math.max(v, alpha);
                 currentNode.shortestDistanceWithDetective = v;
                 currentNode.alpha = alpha;
+                currentNode.score = alpha;
                 nodes.add(currentNode);
             }
         } else {
@@ -167,6 +148,7 @@ public class Minimax {
                 beta = Math.min(v, beta);
                 currentNode.shortestDistanceWithDetective = v;
                 currentNode.beta = beta;
+                currentNode.score = beta;
                 nodes.add(currentNode);
             }
         }

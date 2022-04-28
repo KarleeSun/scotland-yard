@@ -36,6 +36,8 @@ public class Dijkstra {
         List<Integer> detectiveDistances = new ArrayList();
         for (Integer d : destinations) {
             detectiveDistances.add(distance[d]);
+            System.out.println("source: " + source.vertex);
+            System.out.println("destination: " + d + ", distance: " + distance[d] + ", d-1: " + distance[d-1] + ", d+1: " + distance[d+1]);
         }
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
@@ -54,6 +56,7 @@ public class Dijkstra {
 
     private List<List<Node>> getAllAdjacentNodes(Board board) {
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
+        allAdjacentNodes.add(List.of(new Node(-1, -1)));
         ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph = board.getSetup().graph;
         //iterate through all vertex in the graph
         for (Integer vertex : graph.nodes()) {
