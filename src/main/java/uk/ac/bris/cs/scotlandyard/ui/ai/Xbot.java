@@ -52,17 +52,17 @@ public class Xbot implements Ai {
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
-        Boolean beforeReveal = board.getSetup().moves.get(board.getMrXTravelLog().size()+1) || board.getSetup().moves.get(board.getMrXTravelLog().size()+2);
-        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size()>1? board.getMrXTravelLog().size()-1 : 0);
         Boolean tooClose = (dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)).get(0) <= 1);
+        System.out.println("too close? " + tooClose + "shortest distance: " + dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)));
         Boolean hasTicket = gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) || gameData.mrX.has(ScotlandYard.Ticket.SECRET);
-        if((afterReveal || tooClose) && hasTicket){
+        System.out.println("has ticket?" + hasTicket);
+        if((tooClose) && hasTicket){
             System.out.println("situation 1");
             List<Move> moves = List.copyOf(board.getAvailableMoves().asList());
-            if(tooClose) {
+            if(tooClose && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) {
                 moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove)
                         .filter(m -> (((Move.DoubleMove) m).ticket1 == ScotlandYard.Ticket.SECRET || ((Move.DoubleMove) m).ticket2 == ScotlandYard.Ticket.SECRET)).toList();
-            } else {
+            } else if(tooClose && !gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) && gameData.mrX.has(ScotlandYard.Ticket.SECRET)) {
                 moves.stream().filter(move -> move instanceof Move.SingleMove);
                 moves.stream().filter(move -> {
                     List<ScotlandYard.Ticket> tickets = new ArrayList<>();
@@ -80,6 +80,9 @@ public class Xbot implements Ai {
                     bestMove = move;
                 }
             }
+            System.out.println("move: " + bestMove);
+            System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
+
             return bestMove;
             
 //            Map<Move,Integer> movesWithDistances = new HashMap<>();
@@ -97,6 +100,8 @@ public class Xbot implements Ai {
                     maxScoreNode = ChildNode;
                 }
             }
+            System.out.println("score: " + maxScoreNode.getScore() + ", move: " + maxScoreNode.getMove());
+            System.out.println(dijkstra.getDetectivesDistance((((Move.SingleMove)maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)));
             return maxScoreNode.getMove();
         }
     }
