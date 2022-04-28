@@ -34,27 +34,33 @@ public class Xbot implements Ai {
         return "Xbot";
     }
 
-    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair){
+    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
-        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
+        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX), getDetectivePlayers(board, getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
         int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)).get(0);
+        System.out.println("shortest: " + dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)));
         //三种情况 用double 用secret 普通
-        if(shortest <= 3) {
-            List<Move> moves = board.getAvailableMoves().stream().toList();
-            Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
-            if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
-                moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
-            } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3) {
-                moves.stream().filter(move -> {
-                    List<ScotlandYard.Ticket> tickets = new ArrayList<>();
-                    for (ScotlandYard.Ticket ticket : move.tickets())
-                        tickets.add(ticket);
-                    return tickets.contains(ScotlandYard.Ticket.SECRET);
-                });
-            }
-            Move bestMove = null;
+        List<Move> moves = board.getAvailableMoves().stream().toList();
+        Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
+        Boolean doubleOrSecrete = false;
+        if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
+            System.out.println("situation: double");
+            doubleOrSecrete = true;
+            moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
+        } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest < 2) {
+            System.out.println("situation: secrete");
+            doubleOrSecrete = true;
+            moves.stream().filter(move -> {
+                List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+                for (ScotlandYard.Ticket ticket : move.tickets())
+                    tickets.add(ticket);
+                return tickets.contains(ScotlandYard.Ticket.SECRET);
+            });
+        }
+        Move bestMove = null;
+        if (doubleOrSecrete) {
             int furthestMoveDistance = 0;
             for (Move move : moves) {
                 int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
@@ -68,24 +74,24 @@ public class Xbot implements Ai {
             System.out.println("best move data--------");
             System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
             return bestMove;
-        } else { //situation 2
-            System.out.println("situation 2");
-            Minimax.TreeNode root = minimax.tree(board,3, gameData);
-            Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
-            for(Minimax.TreeNode childNode : root.getChildren()){
-                if(childNode.getScore() > maxScoreNode.getScore()){
-                    System.out.println("child node score: " + childNode.getScore());
-                    System.out.println("max score: " + childNode.getScore());
-                    maxScoreNode = childNode;
-                }
-            }
-            System.out.println("score: " + maxScoreNode.getScore() + ", move: " + maxScoreNode.getMove());
-            System.out.println("best move data--------");
-            System.out.println(dijkstra.getDetectivesDistance((((Move.SingleMove)maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)));
-
-            return maxScoreNode.getMove();
         }
-    }
+        //situation 2
+        System.out.println("situation 2");
+        Minimax.TreeNode root = minimax.tree(board, 3, gameData);
+        Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
+        for (Minimax.TreeNode childNode : root.getChildren()) {
+            if (childNode.getScore() > maxScoreNode.getScore()) {
+                System.out.println("child node score: " + childNode.getScore());
+                System.out.println("max score: " + childNode.getScore());
+                maxScoreNode = childNode;
+            }
+        }
+        System.out.println("score: " + maxScoreNode.getScore() + ", move: " + maxScoreNode.getMove());
+        System.out.println("best move data--------");
+        System.out.println(dijkstra.getDetectivesDistance((((Move.SingleMove) maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)));
+
+        return maxScoreNode.getMove();
+}
 
 
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
@@ -115,31 +121,31 @@ public class Xbot implements Ai {
     }
 
 
-    public List<Integer> getLocAsList(List<Player> detectivesPlayer){
+    public List<Integer> getLocAsList(List<Player> detectivesPlayer) {
         List<Integer> detectivesLoc = new ArrayList<>();
-        for(Player d: detectivesPlayer){
+        for (Player d : detectivesPlayer) {
             detectivesLoc.add(d.location());
         }
         return detectivesLoc;
     }
 
 
-    public Player getMrXPlayer(@Nonnull Board board, Piece mrX){
+    public Player getMrXPlayer(@Nonnull Board board, Piece mrX) {
         return new Player(mrX, ImmutableMap.copyOf(getCurrentMrXTickets(board)), board.getAvailableMoves().stream().iterator().next().source());
     }
 
-    public List<Player> getDetectivePlayers(@Nonnull Board board, List<Piece.Detective> detectives){
+    public List<Player> getDetectivePlayers(@Nonnull Board board, List<Piece.Detective> detectives) {
         List<Player> detectivePlayers = new ArrayList<>();
-        for(Piece.Detective d : detectives){
-            Player detective = new Player(d,ImmutableMap.copyOf(getCurrentDetectiveTickets(board,d)),board.getDetectiveLocation(d).get());
+        for (Piece.Detective d : detectives) {
+            Player detective = new Player(d, ImmutableMap.copyOf(getCurrentDetectiveTickets(board, d)), board.getDetectiveLocation(d).get());
             detectivePlayers.add(detective);
         }
         return detectivePlayers;
     }
 
-    public int getDestination(Move move){
+    public int getDestination(Move move) {
         int distance = move instanceof Move.SingleMove
-                ? ((Move.SingleMove)move).destination : ((Move.DoubleMove)move).destination2;
+                ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
         return distance;
     }
 
