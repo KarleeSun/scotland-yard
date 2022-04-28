@@ -49,6 +49,11 @@ public class Xbot implements Ai {
           only choose from SECRET move
          */
         else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 1) {
+            moves = moves.stream().filter(move -> {
+                List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+                move.tickets().forEach(tickets::add);
+                return tickets.contains(ScotlandYard.Ticket.SECRET);
+            }).toList();
             doubleOrSecret = true;
         }
         //choose move if one of the above condition fulfilled
