@@ -36,15 +36,9 @@ public class Dijkstra {
         List<Integer> detectiveDistances = new ArrayList();
         for (Integer d : destinations) {
             detectiveDistances.add(distance[d]);
-            System.out.println("source: " + source.vertex);
-            System.out.println("destination: " + d + ", distance: " + distance[d] + ", d-1: " + distance[d-1] + ", d+1: " + distance[d+1]);
         }
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
-    }
-    public int getDistance(int s, int destination){
-        destinations = List.of(destination);
-        return dijkstraShortestDistance(s)[destination];
     }
 
     //convert transportation to distance according the number of according ticket left from detectives
