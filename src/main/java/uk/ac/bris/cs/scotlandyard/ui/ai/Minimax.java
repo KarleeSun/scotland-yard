@@ -107,7 +107,6 @@ public class Minimax {
             node.addChild(newNode);
             newNode.setParent(node);
             newNode.score = score.giveScore(board, gameData, move);
-            System.out.println("newNode.score: "+newNode.score);
 
             timeList.add(System.currentTimeMillis() - start);
             createTree(board, newNode, depth - 1, gameData, root);
