@@ -38,16 +38,20 @@ public class Xbot implements Ai {
         if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
             System.out.println("situation: double");
             doubleOrSecret = true;
-            List<Move.DoubleMove> doubleMoves = new ArrayList<>();
-            for(Move m : moves){
-                if(m instanceof Move.DoubleMove)
-                    doubleMoves.add((Move.DoubleMove)m);
-            }
+            List<Move> doubleMoves = moves.stream().filter(m -> m instanceof Move.DoubleMove).toList();
             System.out.println("suppose to be only double moves: " + doubleMoves);
-            doubleMoves.stream().filter(m -> m instanceof Move.DoubleMove).map(m -> (Move.DoubleMove)m)
-                            .filter(m -> !(m.ticket1.equals(ScotlandYard.Ticket.SECRET) && m.ticket2.equals(ScotlandYard.Ticket.SECRET)));
+            moves.removeIf(move -> {
+                List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+                for (ScotlandYard.Ticket ticket : move.tickets())
+                    tickets.add(ticket);
+                return tickets.contains(ScotlandYard.Ticket.SECRET);
+            });
+//            List<Move> updateMoves = new ArrayList<>();
+//            updateMoves.addAll(doubleMoves.stream().filter(m -> m instanceof Move.DoubleMove).map(m -> (Move.DoubleMove)m)
+//                            .filter(m -> !(m.ticket1.equals(ScotlandYard.Ticket.SECRET) && m.ticket2.equals(ScotlandYard.Ticket.SECRET))).toList());
             System.out.println("suppose to remove both secret: " + doubleMoves);
-            moves.addAll(doubleMoves);
+//            moves.clear();
+//            moves.addAll(updateMoves);
         }
         //use SECRET because it right after reveal and the nearest detective is one step away from Mr x
         //only choose from SECRET Single move
