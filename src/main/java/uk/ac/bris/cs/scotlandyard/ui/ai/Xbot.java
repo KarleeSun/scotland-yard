@@ -49,6 +49,7 @@ public class Xbot implements Ai {
             System.out.println("situation: double");
             doubleOrSecrete = true;
             moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
+            moves.removeIf(m -> ((Move.DoubleMove)m).ticket1 == ScotlandYard.Ticket.SECRET && ((Move.DoubleMove)m).ticket2 == ScotlandYard.Ticket.SECRET);
         } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest < 2) {
             System.out.println("situation: secrete");
             doubleOrSecrete = true;
