@@ -16,10 +16,9 @@ public class Score {
     // due to different weight, factor other than distance score is only considered when the distance score is the same
     public int giveScore(@Nonnull Board board, Minimax.Info gameData, Move move) {
         Dijkstra dijkstra = new Dijkstra(board);
-        int score = distanceScore(gameData, move, dijkstra) + transportationScore(board, move.source())
+        return distanceScore(gameData, move, dijkstra) + transportationScore(board, move.source())
                 + guessPossibilityScore(board, move.source(), ((Move.SingleMove) move).ticket)
                 + edgeScore(move, dijkstra) + transportScore((Move.SingleMove) move);
-        return score;
     }
 
     // score factor based on distance between detectives.
@@ -38,7 +37,8 @@ public class Score {
         int adjacentNodesNum = board.getSetup().graph.adjacentNodes(loc).size();
         int transportationTypeNum = 0;
         for (Integer i : board.getSetup().graph.adjacentNodes(loc)) {
-            transportationTypeNum += board.getSetup().graph.edgeValueOrDefault(loc, i, ImmutableSet.of()).size();
+            transportationTypeNum += Objects.requireNonNull(board.getSetup().graph.edgeValueOrDefault(
+                    loc, i, ImmutableSet.of())).size();
         }
         return (2 * adjacentNodesNum + transportationTypeNum);
     }
@@ -48,7 +48,8 @@ public class Score {
         int possibleScore = 0;
         Set<Integer> allAdjacentNodes = board.getSetup().graph.adjacentNodes(source);
         for (Integer node : allAdjacentNodes) {
-            for (ScotlandYard.Transport t : board.getSetup().graph.edgeValueOrDefault(source, node, ImmutableSet.of())) {
+            for (ScotlandYard.Transport t : Objects.requireNonNull(board.getSetup().graph.edgeValueOrDefault(
+                    source, node, ImmutableSet.of()))) {
                 if (t.requiredTicket() == ticket) possibleScore += 1;
             }
         }
@@ -73,9 +74,8 @@ public class Score {
 
     // helper function that returns the final destination of both single and double move
     public int getDestination(Move move) {
-        int distance = move instanceof Move.SingleMove
+        return move instanceof Move.SingleMove
                 ? ((Move.SingleMove) move).destination
                 : ((Move.DoubleMove) move).destination2;
-        return distance;
     }
 }

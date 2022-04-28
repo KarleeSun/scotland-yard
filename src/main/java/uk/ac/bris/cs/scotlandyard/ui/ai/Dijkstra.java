@@ -10,43 +10,34 @@ import java.util.*;
 public class Dijkstra {
     static int MAX = 100000;
     private final Board board;
-    private int[] distance;                         /*store distance from source to vertex(index)*/
     private Set<Integer> terminated;                /*store terminated vertices*/
     private final PriorityQueue<Node> priorityQueue;
     private final int V;                                  /*total number of vertices*/
     private final List<List<Node>> adjacentNodes;         /*store all adjacent nodes of all nodes*/
-    private Node source;                            /*source node: mrX's location*/
     private List<Integer> destinations;             /*detectivesLocation*/
-
 
     public Dijkstra(@Nonnull Board board){
         this.board = board;
         V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
-        terminated = new HashSet<Integer>();
-        priorityQueue = new PriorityQueue<Node>(V, new Node());         /*order according to Node weight*/
+        terminated = new HashSet<>();
+        priorityQueue = new PriorityQueue<>(V, new Node());         /*order according to Node weight*/
         adjacentNodes = getAllAdjacentNodes(board);         /*graph vertex start from 1, fill 0 with empty list*/
     }
 
-
     //return: a list of weights from mr X to individual detectives, ordered from lowest to largest
     public List<Integer> getDetectivesDistance(int mrXLocation, List<Integer> detectivesLocation) {
-        source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
+        /*source node: mrX's location*/
+        Node source = new Node(mrXLocation, 0);          /*distance from source to source is 0*/
         destinations = detectivesLocation;
-        distance = dijkstraShortestDistance(source.vertex);
-        List<Integer> detectiveDistances = new ArrayList();
+        /*store distance from source to vertex(index)*/
+        int[] distance = dijkstraShortestDistance(source.vertex);
+        List<Integer> detectiveDistances = new ArrayList<>();
         for (Integer d : destinations) {
             detectiveDistances.add(distance[d]);
         }
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
     }
-
-    //convert transportation to distance according the number of according ticket left from detectives
-//    private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
-//        return switch (t.toString()) {
-//            default -> 1;
-//        };
-//    }
 
     private List<List<Node>> getAllAdjacentNodes(Board board) {
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
@@ -64,7 +55,7 @@ public class Dijkstra {
 
     //Dijkstra to find the shortest distance between source and destination
     private int[] dijkstraShortestDistance(int source) {
-        terminated = new HashSet<Integer>();
+        terminated = new HashSet<>();
         int[] sourceToVertexDistance = new int[V];
         adjacentNodes.addAll(getAllAdjacentNodes(board));  /*make an adjacency list of all vertex in the graph*/
         for (int i = 0; i < V; i++) sourceToVertexDistance[i] = MAX;        /*assign initial value*/
@@ -72,7 +63,8 @@ public class Dijkstra {
         priorityQueue.add(new Node(source, 0));         /*add source to priority queue*/
         while (!terminated.containsAll(destinations)) {          /*terminated stores from 0, stop when all found*/
             Node w = priorityQueue.poll();          /*poll the first element in priority queue*/
-            if (terminated.contains(w.vertex)) continue;         /*skip if already terminated shorter distance*/
+            //skip if already terminated shorter distance
+            if (terminated.contains(Objects.requireNonNull(w).vertex)) continue;
             terminated.add(w.vertex);
             processAdjacentVertices(w, sourceToVertexDistance);         /*process adjacent vertices*/
         }
@@ -82,7 +74,7 @@ public class Dijkstra {
     private void processAdjacentVertices(Node w, int[] sourceToVertexDistance) {
         for (Node v : adjacentNodes.get(w.vertex)) {      /*iterate through all adjacent nodes of 1 vertex*/
             if (!terminated.contains(v.vertex)) {
-                int alternativeDistance = sourceToVertexDistance[w.vertex] + v.weight;        /*(source -> w) + (w -> v)*/
+                int alternativeDistance = sourceToVertexDistance[w.vertex] + v.weight;     /*(source -> w) + (w -> v)*/
                 if (alternativeDistance < sourceToVertexDistance[v.vertex]) {
                     sourceToVertexDistance[v.vertex] = alternativeDistance;       /*update distance if nearer*/
                 }
