@@ -9,7 +9,6 @@ import java.util.*;
 public class Minimax {
     public static int MIN = Integer.MIN_VALUE;
     public static int MAX = Integer.MAX_VALUE;
-    public static Piece.MrX mrX = Piece.MrX.MRX;
 
     public class TreeNode {
         private Move move;
@@ -37,11 +36,6 @@ public class Minimax {
             if (child.parent == null) child.setParent(this);
         }
 
-//        public void addChild(Move move, int score, Info gameData) {
-//            TreeNode child = new TreeNode(move, score,gameData);
-//            this.children.add(child);
-//            if (!child.parent.equals(this)) child.setParent(this);
-//        }
 
         public void setParent(TreeNode parent) {
             this.parent = parent;
@@ -74,26 +68,19 @@ public class Minimax {
         System.out.println("loaded");
         TreeNode root = new TreeNode(null, 0, gameData);
         root.nodeGameState = (Board.GameState) board;
-        createTree(board, root, depth, gameData, root);
+        createTree(board, root, depth, gameData);
         miniMaxAlphaBeta(root, depth, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
         return root;
     }
 
     public List<Long> timeList = new ArrayList<>();
 
-    public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData, TreeNode root) {
+    public void createTree(@Nonnull Board board, TreeNode node, int depth, Info gameData) {
+        //在这里面写 在普通轮时候只算single不算double和secret，在算double时候只算有double和secret的情况 不算普通情况
         Score score = new Score();
         Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
-        List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
-//        moves.removeIf(move -> move instanceof Move.DoubleMove);
-        moves.removeIf(move -> {
-            List<ScotlandYard.Ticket> tickets = new ArrayList<>();
-            for (ScotlandYard.Ticket ticket : move.tickets())
-                tickets.add(ticket);
-            return tickets.contains(ScotlandYard.Ticket.SECRET);
-        });
-        TreeNode parent = node.getParent();
+        List<Move> moves = getMoves(board,node,gameData,dijkstra,xbot);
         if (moves.size() <= 0 || depth <= 0)
             return;
         if (moves.get(0).commencedBy().isMrX()) {
@@ -111,7 +98,7 @@ public class Minimax {
                 }
 
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(board, newNode, depth - 1, gameData, root);
+                createTree(board, newNode, depth - 1, gameData);
             }
 
         } else {
@@ -126,9 +113,38 @@ public class Minimax {
                 node.addChild(newNode);
                 newNode.setParent(node);
                 timeList.add(System.currentTimeMillis() - start);
-                createTree(board, newNode, depth - 1, gameData, root);
+                createTree(board, newNode, depth - 1, gameData);
             }
         }
+    }
+
+
+    public List<Move> getMoves(@Nonnull Board board, TreeNode node, Info gameData, Dijkstra dijkstra,Xbot xbot){ //就是在普通轮只算single 该算double和secret的轮算double和secret
+        //总共有5张secret 两张double，每次double用两张secret，最后剩的一张最后一轮用
+        List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
+        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size() + 1);
+        Boolean tooClose = dijkstra.getDetectivesDistance(gameData.mrX.location(),xbot.getLocAsList(gameData.detectives)).get(0) <= 3;
+        if(afterReveal || tooClose){
+            //如果太近时候没有double了就只用secret
+            if(gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) moves.stream().filter(move -> move instanceof Move.DoubleMove);
+            if(gameData.mrX.has(ScotlandYard.Ticket.SECRET)){
+                moves.removeIf(move -> {
+                    List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+                    for (ScotlandYard.Ticket ticket : move.tickets())
+                        tickets.add(ticket);
+                    return !tickets.contains(ScotlandYard.Ticket.SECRET);
+                });
+            }
+        } else {
+            moves.removeIf(move -> move instanceof Move.DoubleMove);
+            moves.removeIf(move -> {
+                List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+                for (ScotlandYard.Ticket ticket : move.tickets())
+                    tickets.add(ticket);
+                return tickets.contains(ScotlandYard.Ticket.SECRET);
+            });
+        }
+        return moves;
     }
 
     public List<Integer> getMrxPossibleLocation(Board board) { //得到mrX所有可能在的位置

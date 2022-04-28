@@ -20,11 +20,11 @@ public class Score {
         if(move instanceof Move.SingleMove) {
             score = distanceScore(gameData, move, dijkstra) * 10 + transportationScore(board, move.source())
                     + guessPossibilityScore(board, move.source(), ((Move.SingleMove) move).ticket)
-                    + edgeScore(move, dijkstra) + strategyScore(board,move,dijkstra,gameData);
+                    + edgeScore(move, dijkstra);
         } else {
             score = distanceScore(gameData, move, dijkstra) * 10 + transportationScore(board, move.source())
                     + guessPossibilityScore(board, move.source(), ((Move.DoubleMove) move).ticket2)
-                    + edgeScore(move, dijkstra) + strategyScore(board,move,dijkstra,gameData);
+                    + edgeScore(move, dijkstra);
         }
         System.out.println("score: "+score);
         return score;
@@ -68,33 +68,6 @@ public class Score {
         List<Integer> edgeList = List.of(8,189,6,175,4,197);
         System.out.println("edge score: "+ 5*dijkstra.getDetectivesDistance(getDestination(move),edgeList).get(0));
         return 5 * dijkstra.getDetectivesDistance(getDestination(move),edgeList).get(0);
-    }
-
-    public int strategyScore(@Nonnull Board board, Move move, Dijkstra dijkstra, Minimax.Info gameData) {
-        System.out.println("into s score");
-        Xbot xbot = new Xbot();
-        int strategyScore = 0;
-        if (board.getSetup().moves.get(board.getMrXTravelLog().size() + 1)) {
-            if (move instanceof Move.SingleMove && ((Move.SingleMove) move).ticket == ScotlandYard.Ticket.SECRET)
-                strategyScore = 20;
-            if (move instanceof Move.DoubleMove) {
-                strategyScore += 50;
-                if (((Move.DoubleMove) move).ticket1 == ScotlandYard.Ticket.SECRET) strategyScore += 10;
-                if (((Move.DoubleMove) move).ticket2 == ScotlandYard.Ticket.SECRET) strategyScore += 10;
-            }
-        } else {
-            if((dijkstra.getDetectivesDistance(move.source(),xbot.getLocAsList(gameData.detectives)).get(0)) <= 2)
-                return strategyScore;
-            if (move instanceof Move.SingleMove && ((Move.SingleMove) move).ticket == ScotlandYard.Ticket.SECRET)
-                strategyScore = -20;
-            if (move instanceof Move.DoubleMove) {
-                strategyScore -= 500;
-                if (((Move.DoubleMove) move).ticket1 == ScotlandYard.Ticket.SECRET) strategyScore -= 10;
-                if (((Move.DoubleMove) move).ticket2 == ScotlandYard.Ticket.SECRET) strategyScore -= 10;
-            }
-        }
-        System.out.println("strategy score: "+strategyScore);
-        return strategyScore;
     }
 
     public int getDestination(Move move){
