@@ -84,7 +84,7 @@ public class Dijkstra {
     }
 
     //Represents one vertex in the graph with distance to source vertex
-    class Node implements Comparator<Node> {
+    static class Node implements Comparator<Node> {
         public int vertex;
         public int weight;
 

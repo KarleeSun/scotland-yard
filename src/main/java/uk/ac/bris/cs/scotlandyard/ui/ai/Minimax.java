@@ -110,7 +110,7 @@ public class Minimax {
     public TreeNode miniMaxAlphaBeta(TreeNode node, int depth, Boolean maximizing, int alpha, int beta) {
         if (node.children.isEmpty()) {return node;} // leaf node
         int v = node.score; //store the score of this node into the node
-        List<TreeNode> nodes = new ArrayList<>(); //??
+        List<TreeNode> nodes = new ArrayList<>(); //to store a nodes of this layer
         if (maximizing) { //if it is the layer moving by mr X
             for (int i = 0; i < node.children.size(); i++) {
                 //use depth first search(DFS) method searching from the top
@@ -124,11 +124,14 @@ public class Minimax {
                 alpha = Math.max(v, alpha); //update alpha
                 currentNode.shortestDistanceWithDetective = v;
                 currentNode.score = alpha; //update score in current node to pass score to the upper layer
-                nodes.add(currentNode); //??
+                nodes.add(currentNode); //add this node to nodes
             }
+            //choose the node with maximum score to return
+            return Collections.max(nodes, Comparator.comparingInt(n -> n.shortestDistanceWithDetective));
         } else { // if it is the layer moving by detectives
             for (int i = 0; i < node.children.size(); i++) {
                 TreeNode currentNode = node.children.get(i);
+                //decide whether to prune the brunch
                 if (beta <= alpha)
                     nodePruning(currentNode);
                 TreeNode scoreNode = miniMaxAlphaBeta(currentNode, depth + 1, true, alpha, beta);
@@ -138,12 +141,12 @@ public class Minimax {
                 currentNode.score = beta;
                 nodes.add(currentNode);
             }
+            //choose the node with minimum score to return
+            return Collections.min(nodes, Comparator.comparingInt(n -> n.shortestDistanceWithDetective));
         }
-        //??
-        return Collections.max(nodes, Comparator.comparingInt(n -> n.shortestDistanceWithDetective));
     }
 
-    // pruning node by clear its children
+    // pruning node by clearing all of its children
     public void nodePruning(TreeNode parentNode) {
         List<TreeNode> childrenNode = parentNode.children;
         childrenNode.forEach(child -> nodePruning(child));

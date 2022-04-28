@@ -26,7 +26,8 @@ public class Score {
         Xbot xbot = new Xbot();
         List<Integer> distance = dijkstra.getDetectivesDistance(getDestination(move), xbot.getLocAsList(gameData.detectives));
         // average distance between all detective and destination
-        int average = (int) distance.stream().mapToDouble(Number::doubleValue).average().getAsDouble();
+        int average = distance.stream().mapToInt(Number::intValue).average().isPresent()
+                ? (int)distance.stream().mapToInt(Number::intValue).average().getAsDouble() : 0;
         // distance between the nearest detective and Mr x
         int nearest = distance.get(0);
         return (nearest * 9 + average)*10;
