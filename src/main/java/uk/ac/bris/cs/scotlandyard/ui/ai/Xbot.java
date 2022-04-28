@@ -39,14 +39,18 @@ public class Xbot implements Ai {
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
+        List<Move> moves = board.getAvailableMoves().stream().toList();
         int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)).get(0);
+        System.out.println("shortest = "+shortest + ","+dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)).get(0));
         //三种情况 用double 用secret 普通
         if(shortest <= 3) {
-            List<Move> moves = board.getAvailableMoves().stream().toList();
             Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
             if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
+                System.out.println("111111");
                 moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
-            } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3) {
+            } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal) {
+                System.out.println("22222");
+                moves.stream().filter(move -> move instanceof Move.SingleMove);
                 moves.stream().filter(move -> {
                     List<ScotlandYard.Ticket> tickets = new ArrayList<>();
                     for (ScotlandYard.Ticket ticket : move.tickets())
