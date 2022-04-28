@@ -45,12 +45,18 @@ public class Xbot implements Ai {
         List<Move> moves = board.getAvailableMoves().stream().toList();
         Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
         Boolean doubleOrSecrete = false;
+        //use DOUBLE because the nearest detective is one step away from Mr X
+        //only choose from DOUBLE MOVE, may or may not use SECRETE
         if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
             System.out.println("situation: double");
             doubleOrSecrete = true;
             moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
             moves.removeIf(m -> ((Move.DoubleMove)m).ticket1 == ScotlandYard.Ticket.SECRET && ((Move.DoubleMove)m).ticket2 == ScotlandYard.Ticket.SECRET);
         } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest < 2) {
+        }
+        //use SECRETE because it right after reveal and the nearest detective is one step away from Mr x
+        //only choose from SECRETE Single move
+        else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 1) {
             System.out.println("situation: secrete");
             doubleOrSecrete = true;
             moves.stream().filter(move -> {
@@ -61,25 +67,19 @@ public class Xbot implements Ai {
             });
         }
         Move bestMove = null;
+        //choose move if one of the above condition fullfilled
         if (doubleOrSecrete) {
-            int furthestMoveDistance = 0;
-            for (Move move : moves) {
-                int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
-                if (currentDistance > furthestMoveDistance) {
-                    furthestMoveDistance = currentDistance;
-                    bestMove = move;
-                }
-            }
-            System.out.println("move: " + bestMove);
+            return moveGivesLongestDistance(moves, board);
             System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
             System.out.println("best move data--------");
             System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
             return bestMove;
         }
-        //situation 2
+        //under normal condition, use Minimax
         System.out.println("situation 2");
         Minimax.TreeNode root = minimax.tree(board, 3, gameData);
         Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
+        //get the move with the highest score from current available moves
         for (Minimax.TreeNode childNode : root.getChildren()) {
             if (childNode.getScore() > maxScoreNode.getScore()) {
                 System.out.println("child node score: " + childNode.getScore());
@@ -90,9 +90,28 @@ public class Xbot implements Ai {
         System.out.println("score: " + maxScoreNode.getScore() + ", move: " + maxScoreNode.getMove());
         System.out.println("best move data--------");
         System.out.println(dijkstra.getDetectivesDistance((((Move.SingleMove) maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)));
-
+        // the best move in long run might be the worst move in short run
+        // if the best move pick is one step away from detectives, choose another move that is the best without think further
+        if(dijkstra.getDetectivesDistance((((Move.SingleMove) maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)).get(0) <= 1) {
+            return moveGivesLongestDistance(moves, board);
+        }
         return maxScoreNode.getMove();
-}
+    }
+    //return a move that result the longest distance between detectives
+    public Move moveGivesLongestDistance(List<Move> possibleMoves, @Nonnull Board board){
+        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX), getDetectivePlayers(board, getAllDetectives(board)));
+        Dijkstra dijkstra = new Dijkstra(board);
+        int furthestMoveDistance = 0;
+        Move bestMove = null;
+        for (Move move : possibleMoves) {
+            int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
+            if (currentDistance > furthestMoveDistance) {
+                furthestMoveDistance = currentDistance;
+                bestMove = move;
+            }
+        }
+        return bestMove;
+    }
 
 
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
