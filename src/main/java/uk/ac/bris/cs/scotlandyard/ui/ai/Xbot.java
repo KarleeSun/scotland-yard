@@ -82,6 +82,8 @@ public class Xbot implements Ai {
             }
             System.out.println("move: " + bestMove);
             System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
+            System.out.println("best move data--------");
+            System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
 
             return bestMove;
             
@@ -95,13 +97,17 @@ public class Xbot implements Ai {
             System.out.println("situation 2");
             Minimax.TreeNode root = minimax.tree(board,3, gameData);
             Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
-            for(Minimax.TreeNode ChildNode : root.getChildren()){
-                if(ChildNode.getScore() > maxScoreNode.getScore()){
-                    maxScoreNode = ChildNode;
+            for(Minimax.TreeNode childNode : root.getChildren()){
+                if(childNode.getScore() > maxScoreNode.getScore()){
+                    System.out.println("child node score: " + childNode.getScore());
+                    System.out.println("max score: " + childNode.getScore());
+                    maxScoreNode = childNode;
                 }
             }
             System.out.println("score: " + maxScoreNode.getScore() + ", move: " + maxScoreNode.getMove());
+            System.out.println("best move data--------");
             System.out.println(dijkstra.getDetectivesDistance((((Move.SingleMove)maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)));
+
             return maxScoreNode.getMove();
         }
     }
