@@ -24,7 +24,7 @@ public class Dijkstra {
         V = board.getSetup().graph.nodes().size() + 1;        /*array starts from 0*/
         terminated = new HashSet<Integer>();
         priorityQueue = new PriorityQueue<Node>(V, new Node());         /*order according to Node weight*/
-        adjacentNodes = getAllAdjacentNodes(board);                     /*graph vertex start from 1, fill 0 with empty list*/
+        adjacentNodes = getAllAdjacentNodes(board);         /*graph vertex start from 1, fill 0 with empty list*/
     }
 
 
@@ -36,41 +36,27 @@ public class Dijkstra {
         List<Integer> detectiveDistances = new ArrayList();
         for (Integer d : destinations) {
             detectiveDistances.add(distance[d]);
-            System.out.println("source: " + source.vertex);
-            System.out.println("destination: " + d + ", distance: " + distance[d] + ", d-1: " + distance[d-1] + ", d+1: " + distance[d+1]);
         }
         detectiveDistances.sort(Comparator.naturalOrder());
         return detectiveDistances;
     }
-    public int getDistance(int s, int destination){
-        destinations = List.of(destination);
-        return dijkstraShortestDistance(s)[destination];
-    }
 
     //convert transportation to distance according the number of according ticket left from detectives
-    private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
-        return switch (t.toString()) {
-            default -> 1;
-        };
-    }
+//    private int transportToDistance(@Nonnull Board board, ScotlandYard.Transport t) {
+//        return switch (t.toString()) {
+//            default -> 1;
+//        };
+//    }
 
     private List<List<Node>> getAllAdjacentNodes(Board board) {
         List<List<Node>> allAdjacentNodes = new ArrayList<>();
-        allAdjacentNodes.add(List.of(new Node(-1, -1)));
+        allAdjacentNodes.add(List.of(new Node(-1, -1)));    /* solve 0 index problem*/
         ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> graph = board.getSetup().graph;
         //iterate through all vertex in the graph
         for (Integer vertex : graph.nodes()) {
             List<Node> adjOfOneVertex = new ArrayList<>();
-            //iterate through all adjacent vertex of a vertex
-            for (Integer adjVertex : graph.adjacentNodes(vertex)) {
-                List<Integer> transportWeights = new ArrayList<>();
-                //iterate through all possible transportation from vertex to adjVertex and convert to weight
-                for (ScotlandYard.Transport t : graph.edgeValueOrDefault(vertex, adjVertex, ImmutableSet.of())) {
-                    transportWeights.add(transportToDistance(board, t));
-                }
-                transportWeights.sort(Comparator.naturalOrder());
-                adjOfOneVertex.add(new Node(adjVertex, transportWeights.get(0)));       /*make new node for adj vertex*/
-            }
+            //iterate through all adjacent vertex of a vertex and make a new node for adj vertex
+            graph.adjacentNodes(vertex).forEach(v -> adjOfOneVertex.add(new Node(v, 1)));
             allAdjacentNodes.add(adjOfOneVertex);
         }
         return allAdjacentNodes;
@@ -84,7 +70,7 @@ public class Dijkstra {
         for (int i = 0; i < V; i++) sourceToVertexDistance[i] = MAX;        /*assign initial value*/
         sourceToVertexDistance[source] = 0;
         priorityQueue.add(new Node(source, 0));         /*add source to priority queue*/
-        while (!terminated.containsAll(destinations)) {          /*terminated stores from 0*/
+        while (!terminated.containsAll(destinations)) {          /*terminated stores from 0, stop when all found*/
             Node w = priorityQueue.poll();          /*poll the first element in priority queue*/
             if (terminated.contains(w.vertex)) continue;         /*skip if already terminated shorter distance*/
             terminated.add(w.vertex);
@@ -110,8 +96,7 @@ public class Dijkstra {
         public int vertex;
         public int weight;
 
-        public Node() {
-        }
+        public Node() {}
 
         public Node(int vertex, int weight) {
             this.vertex = vertex;

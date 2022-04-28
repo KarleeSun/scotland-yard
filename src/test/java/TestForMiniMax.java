@@ -23,7 +23,7 @@ public class TestForMiniMax {
 
     @Test
     public void testForMiniMax() {
-        var mrX = new Player(MRX, defaultMrXTickets(), 106);
+        var mrX = new Player(MRX, defaultMrXTickets(), 11);
         var red = new Player(RED, defaultDetectiveTickets(), 91);
         var green = new Player(GREEN, defaultDetectiveTickets(), 29);
         var blue = new Player(BLUE, defaultDetectiveTickets(), 94);
@@ -32,6 +32,7 @@ public class TestForMiniMax {
         Board.GameState state = new MyGameStateFactory().build(standard24MoveSetup(),
                 mrX, red, green, blue, white, yellow);
         Minimax minimax = new Minimax();
+        minimax.test = true;
         long start = System.currentTimeMillis();
         Minimax.TreeNode root = minimax.tree(state, 3, new Minimax.Info(mrX,List.of(red,green,blue,white,yellow)));
         System.out.println("Time use: " + (System.currentTimeMillis() - start) + "ms");

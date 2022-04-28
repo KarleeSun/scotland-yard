@@ -12,22 +12,8 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 
 
 public class Xbot implements Ai {
-    //成员变量及其初始化
-    //这些可以考虑改成public 因为每个class都用了其实
-    //而且这大概还能再简化吧..看着好丑
-//    private static Board board; //这样在这个class就能直接用，不用每个函数都再传入一遍board
-    private Piece.MrX MRX; //mrX的piece
-    private List<Piece.Detective> detectives; //所有detective的pieces，存在一个list里
-    private int mrXLoc; //记录mrX的位置和预测位置 相当于move的destination
-    private List<Integer> detectivesLoc; //记录detectives的位置 按顺序存在一个list里 相当于是destination
-    private int source; //相当于一个move的source，也许没必要，先写着
-    //    private List<Integer> detectiveSources; //同上，存detectives的sources
-    private Map<ScotlandYard.Ticket, Integer> mrXTickets; //存的是mrX的票
-    private Map<ScotlandYard.Ticket, Integer> detectivesTickets; //存的是detective的票
-    private int turnNum; //记录一下轮数
+    private Piece.MrX MRX;
 
-
-    //name of this AI
     @Nonnull
     @Override
     public String name() {
@@ -41,22 +27,21 @@ public class Xbot implements Ai {
         Dijkstra dijkstra = new Dijkstra(board);
         int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)).get(0);
         System.out.println("shortest: " + dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)));
-        //三种情况 用double 用secret 普通
         List<Move> moves = board.getAvailableMoves().stream().toList();
         Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
-        Boolean doubleOrSecrete = false;
+        Boolean doubleOrSecret = false;
         //use DOUBLE because the nearest detective is one step away from Mr X
-        //only choose from DOUBLE MOVE, may or may not use SECRETE
+        //only choose from DOUBLE MOVE, may or may not use SECRET
         if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
             System.out.println("situation: double");
-            doubleOrSecrete = true;
+            doubleOrSecret = true;
             moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
         }
-        //use SECRETE because it right after reveal and the nearest detective is one step away from Mr x
-        //only choose from SECRETE Single move
+        //use SECRET because it right after reveal and the nearest detective is one step away from Mr x
+        //only choose from SECRET Single move
         else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 1) {
-            System.out.println("situation: secrete");
-            doubleOrSecrete = true;
+            System.out.println("situation: secret");
+            doubleOrSecret = true;
             moves.stream().filter(move -> {
                 List<ScotlandYard.Ticket> tickets = new ArrayList<>();
                 for (ScotlandYard.Ticket ticket : move.tickets())
@@ -64,13 +49,9 @@ public class Xbot implements Ai {
                 return tickets.contains(ScotlandYard.Ticket.SECRET);
             });
         }
-        Move bestMove = null;
-        //choose move if one of the above condition fullfilled
-        if (doubleOrSecrete) {
+        //choose move if one of the above condition fulfilled
+        if (doubleOrSecret) {
             return moveGivesLongestDistance(moves, board);
-            System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
-            System.out.println("best move data--------");
-            System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
         }
         //under normal condition, use Minimax
         System.out.println("situation 2");
@@ -96,12 +77,14 @@ public class Xbot implements Ai {
     }
     //return a move that result the longest distance between detectives
     public Move moveGivesLongestDistance(List<Move> possibleMoves, @Nonnull Board board){
-        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX), getDetectivePlayers(board, getAllDetectives(board)));
+        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX),
+                getDetectivePlayers(board, getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
         int furthestMoveDistance = 0;
         Move bestMove = null;
         for (Move move : possibleMoves) {
-            int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
+            int currentDistance = dijkstra.getDetectivesDistance(getDestination(move),
+                    getLocAsList(gameData.detectives)).get(0);
             if (currentDistance > furthestMoveDistance) {
                 furthestMoveDistance = currentDistance;
                 bestMove = move;
@@ -110,12 +93,11 @@ public class Xbot implements Ai {
         return bestMove;
     }
 
-
+    // get all detective pieces as Piece.Detective
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
         List<Piece> allDetectivePieces = new ArrayList<Piece>();
         allDetectivePieces.addAll(board.getPlayers());
         allDetectivePieces.remove("MRX");
-
         List<Piece.Detective> detectives = new ArrayList<>();
         for (Piece detective : allDetectivePieces) {
             if (detective.isDetective()) detectives.add((Piece.Detective) detective);
@@ -137,33 +119,34 @@ public class Xbot implements Ai {
         return detectiveTickets;
     }
 
-
+    // get current locations of all detectives as a list
     public List<Integer> getLocAsList(List<Player> detectivesPlayer) {
         List<Integer> detectivesLoc = new ArrayList<>();
-        for (Player d : detectivesPlayer) {
-            detectivesLoc.add(d.location());
-        }
+        detectivesPlayer.forEach(d -> detectivesLoc.add(d.location()));
         return detectivesLoc;
     }
 
-
+    // make Mr X a player
     public Player getMrXPlayer(@Nonnull Board board, Piece mrX) {
-        return new Player(mrX, ImmutableMap.copyOf(getCurrentMrXTickets(board)), board.getAvailableMoves().stream().iterator().next().source());
+        return new Player(mrX, ImmutableMap.copyOf(getCurrentMrXTickets(board)),
+                board.getAvailableMoves().stream().iterator().next().source());
     }
 
+    // make detectives players in a list
     public List<Player> getDetectivePlayers(@Nonnull Board board, List<Piece.Detective> detectives) {
         List<Player> detectivePlayers = new ArrayList<>();
-        for (Piece.Detective d : detectives) {
-            Player detective = new Player(d, ImmutableMap.copyOf(getCurrentDetectiveTickets(board, d)), board.getDetectiveLocation(d).get());
-            detectivePlayers.add(detective);
-        }
+        detectives.forEach(d ->  detectivePlayers.add(
+                new Player(d,
+                        ImmutableMap.copyOf(getCurrentDetectiveTickets(board, d)),
+                        board.getDetectiveLocation(d).get())));
         return detectivePlayers;
     }
 
+    // get the final destination of either a single move or double move
     public int getDestination(Move move) {
         int distance = move instanceof Move.SingleMove
-                ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
+                ? ((Move.SingleMove) move).destination
+                : ((Move.DoubleMove) move).destination2;
         return distance;
     }
-
 }
