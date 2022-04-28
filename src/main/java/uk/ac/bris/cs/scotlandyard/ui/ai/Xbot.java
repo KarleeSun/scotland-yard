@@ -39,12 +39,14 @@ public class Xbot implements Ai {
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
+        int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)).get(0);
         //三种情况 用double 用secret 普通
-        int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)).get(0);
-        if(shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)){ //situation 1
-            List<Move> moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
+        if(shortest <= 3) {
+            List<Move> moves = board.getAvailableMoves().stream().toList();
             Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
-            if(gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3){
+            if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
+                moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
+            } else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3) {
                 moves.stream().filter(move -> {
                     List<ScotlandYard.Ticket> tickets = new ArrayList<>();
                     for (ScotlandYard.Ticket ticket : move.tickets())
@@ -54,9 +56,9 @@ public class Xbot implements Ai {
             }
             Move bestMove = null;
             int furthestMoveDistance = 0;
-            for(Move move: moves){
+            for (Move move : moves) {
                 int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
-                if(currentDistance > furthestMoveDistance){
+                if (currentDistance > furthestMoveDistance) {
                     furthestMoveDistance = currentDistance;
                     bestMove = move;
                 }
@@ -65,7 +67,6 @@ public class Xbot implements Ai {
             System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
             System.out.println("best move data--------");
             System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
-
             return bestMove;
         } else { //situation 2
             System.out.println("situation 2");
@@ -86,80 +87,6 @@ public class Xbot implements Ai {
         }
     }
 
-//    //pick the best move for mrX
-//    @Nonnull
-//    @Override
-//    public Move pickMove(@Nonnull Board board, Pair<Long, TimeUnit> timeoutPair) {
-//        //double 和 secret 單獨處理
-//        //距離特別近的時候也用double和secret
-//        //reveal後一輪用double和secret
-//        //其餘時候用minimax
-//        //在Dijkstra裡面給不同的交通工具賦不同權重
-//        //只有离太近的时候用double，afterReveal用Secret
-//        //before reveal 不能用double
-//        MRX = Piece.MrX.MRX;
-//        Minimax minimax = new Minimax();
-//        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
-//        Dijkstra dijkstra = new Dijkstra(board);
-//        Boolean tooClose = (dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)).get(0) <= 1);
-//        System.out.println("too close? " + tooClose + "shortest distance: " + dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)));
-//        Boolean hasTicket = gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) || gameData.mrX.has(ScotlandYard.Ticket.SECRET);
-//        System.out.println("has ticket?" + hasTicket);
-//        if((tooClose) && hasTicket){
-//            System.out.println("situation 1");
-//            List<Move> moves = List.copyOf(board.getAvailableMoves().asList());
-//            if(tooClose && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) {
-//                moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove)
-//                        .filter(m -> (((Move.DoubleMove) m).ticket1 == ScotlandYard.Ticket.SECRET || ((Move.DoubleMove) m).ticket2 == ScotlandYard.Ticket.SECRET)).toList();
-//            } else if(tooClose && !gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) && gameData.mrX.has(ScotlandYard.Ticket.SECRET)) {
-//                moves.stream().filter(move -> move instanceof Move.SingleMove);
-//                moves.stream().filter(move -> {
-//                    List<ScotlandYard.Ticket> tickets = new ArrayList<>();
-//                    for (ScotlandYard.Ticket ticket : move.tickets())
-//                        tickets.add(ticket);
-//                    return tickets.contains(ScotlandYard.Ticket.SECRET);
-//                });
-//            }
-//            Move bestMove = null;
-//            int furthestMoveDistance = 0;
-//            for(Move move: moves){
-//                int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
-//                if(currentDistance > furthestMoveDistance){
-//                    furthestMoveDistance = currentDistance;
-//                    bestMove = move;
-//                }
-//            }
-//            System.out.println("move: " + bestMove);
-//            System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
-//            System.out.println("best move data--------");
-//            System.out.println(dijkstra.getDetectivesDistance(getDestination(bestMove), getLocAsList(gameData.detectives)));
-//
-//            return bestMove;
-//
-////            Map<Move,Integer> movesWithDistances = new HashMap<>();
-////            for(Move move: moves){
-////                int distance = dijkstra.getDetectivesDistance(((Move.DoubleMove)move).destination2,getLocAsList(gameData.detectives)).get(0);
-////                movesWithDistances.put(move,distance);
-////            }
-////            return movesWithDistances.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
-//        } else {
-//            System.out.println("situation 2");
-//            Minimax.TreeNode root = minimax.tree(board,3, gameData);
-//            Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
-//            for(Minimax.TreeNode childNode : root.getChildren()){
-//                if(childNode.getScore() > maxScoreNode.getScore()){
-//                    System.out.println("child node score: " + childNode.getScore());
-//                    System.out.println("max score: " + childNode.getScore());
-//                    maxScoreNode = childNode;
-//                }
-//            }
-//            System.out.println("score: " + maxScoreNode.getScore() + ", move: " + maxScoreNode.getMove());
-//            System.out.println("best move data--------");
-//            System.out.println(dijkstra.getDetectivesDistance((((Move.SingleMove)maxScoreNode.getMove()).destination), getLocAsList(gameData.detectives)));
-//
-//            return maxScoreNode.getMove();
-//        }
-//    }
 
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
         List<Piece> allDetectivePieces = new ArrayList<Piece>();
