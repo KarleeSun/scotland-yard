@@ -56,12 +56,21 @@ public class Xbot implements Ai {
         if((afterReveal || tooClose) && hasTicket){
             System.out.println("situation 1");
             List<Move> moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
-            Map<Move,Integer> movesWithDistances = new HashMap<>();
+            Move.DoubleMove bestDoubleMove = null;
+            int furthestMoveDistance = 0;
             for(Move move: moves){
-                int distance = dijkstra.getDetectivesDistance(((Move.DoubleMove)move).destination2,getLocAsList(gameData.detectives)).get(0);
-                movesWithDistances.put(move,distance);
+                if(dijkstra.getDetectivesDistance(((Move.DoubleMove)move).destination2, getLocAsList(gameData.detectives)).get(0) > furthestMoveDistance){
+                    bestDoubleMove = (Move.DoubleMove)move;
+                }
             }
-            return movesWithDistances.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+            return bestDoubleMove;
+            
+//            Map<Move,Integer> movesWithDistances = new HashMap<>();
+//            for(Move move: moves){
+//                int distance = dijkstra.getDetectivesDistance(((Move.DoubleMove)move).destination2,getLocAsList(gameData.detectives)).get(0);
+//                movesWithDistances.put(move,distance);
+//            }
+//            return movesWithDistances.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
         } else {
             System.out.println("situation 2");
             Minimax.TreeNode root = minimax.tree(board,3, gameData);
