@@ -24,10 +24,7 @@ public class Xbot implements Ai {
     //    private List<Integer> detectiveSources; //同上，存detectives的sources
     private Map<ScotlandYard.Ticket, Integer> mrXTickets; //存的是mrX的票
     private Map<ScotlandYard.Ticket, Integer> detectivesTickets; //存的是detective的票
-    private Boolean useDouble; //有没有用double票
-    private Boolean useSecret; //有没有用secret票
     private int turnNum; //记录一下轮数
-//    private ScotlandYard.Ticket usedTicket; //存那个detective他用的票
 
 
     //name of this AI
@@ -59,7 +56,7 @@ public class Xbot implements Ai {
         if((afterReveal || tooClose) && hasTicket){
             System.out.println("situation 1");
             List<Move> moves = List.copyOf(board.getAvailableMoves().asList());
-            if(tooClose) {
+            if(tooClose && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) {
                 moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove)
                         .filter(m -> (((Move.DoubleMove) m).ticket1 == ScotlandYard.Ticket.SECRET || ((Move.DoubleMove) m).ticket2 == ScotlandYard.Ticket.SECRET)).toList();
             } else {
