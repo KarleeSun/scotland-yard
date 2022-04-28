@@ -38,6 +38,7 @@ public class Score {
         int shortest = distance.get(0);
         int average = (int) distance.stream().mapToDouble(Number::doubleValue).average().getAsDouble();
         System.out.println("distance score: " + (shortest * 10 + average));
+        if(shortest < 3) return shortest*10000;
         return shortest * 10 + average;
     }
 
