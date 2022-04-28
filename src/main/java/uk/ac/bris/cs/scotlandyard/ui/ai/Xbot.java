@@ -11,25 +11,6 @@ import io.atlassian.fugue.Pair;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
 
-/*
-    是要给每个选择一个分数
-    那就直接重写getAvailableMoves
-    用的时候判断 想走的move是不是在getAvailableMoves获得的moves里面
-    如果在的话就选择那个move
-    然后对现在的局面有一个评分标准
-    之后minimax就是看分的
- */
-
-/*
-    这个事情是这样的，其实不是给它每一轮的分数，是给一个几轮之后的分数（几轮就是depth）
-    然后再倒着找 看导致这个最优结果的是哪一个move
- */
-
-/*
-    问题：mrX能用secret和double时候moves里面没有
-    predictDetectives排列组合有问题
- */
-
 public class Xbot implements Ai {
     //成员变量及其初始化
     //这些可以考虑改成public 因为每个class都用了其实
@@ -68,14 +49,30 @@ public class Xbot implements Ai {
         MRX = Piece.MrX.MRX;
         Minimax minimax = new Minimax();
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board,MRX),getDetectivePlayers(board,getAllDetectives(board)));
-        Minimax.TreeNode root = minimax.tree(board,3, gameData);
-        Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
-        for(Minimax.TreeNode ChildNode : root.getChildren()){
-            if(ChildNode.getScore() > maxScoreNode.getScore()){
-                maxScoreNode = ChildNode;
+        Dijkstra dijkstra = new Dijkstra(board);
+        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size());
+        Boolean tooClose = (dijkstra.getDetectivesDistance(gameData.mrX.location(),getLocAsList(gameData.detectives)).get(0) <= 2);
+        Boolean hasTicket = gameData.mrX.has(ScotlandYard.Ticket.DOUBLE) && gameData.mrX.has(ScotlandYard.Ticket.SECRET);
+        if((afterReveal || tooClose) && hasTicket){
+            System.out.println("situation 1");
+            List<Move> moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
+            Map<Move,Integer> movesWithDistances = new HashMap<>();
+            for(Move move: moves){
+                int distance = dijkstra.getDetectivesDistance(((Move.DoubleMove)move).destination2,getLocAsList(gameData.detectives)).get(0);
+                movesWithDistances.put(move,distance);
             }
+            return movesWithDistances.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+        } else {
+            System.out.println("situation 2");
+            Minimax.TreeNode root = minimax.tree(board,3, gameData);
+            Minimax.TreeNode maxScoreNode = root.getChildren().get(0);
+            for(Minimax.TreeNode ChildNode : root.getChildren()){
+                if(ChildNode.getScore() > maxScoreNode.getScore()){
+                    maxScoreNode = ChildNode;
+                }
+            }
+            return maxScoreNode.getMove();
         }
-        return maxScoreNode.getMove();
     }
 
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {

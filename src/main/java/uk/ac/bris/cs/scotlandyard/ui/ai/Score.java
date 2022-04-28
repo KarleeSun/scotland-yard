@@ -15,6 +15,7 @@ public class Score {
 
     public int giveScore(@Nonnull Board board, Minimax.Info gameData, Move move){ //這個函數就是最終給分的函數
         System.out.println("---------------------------");
+        System.out.println("moves: "+move);
         Dijkstra dijkstra = new Dijkstra(board);
         int score;
         if(move instanceof Move.SingleMove) {

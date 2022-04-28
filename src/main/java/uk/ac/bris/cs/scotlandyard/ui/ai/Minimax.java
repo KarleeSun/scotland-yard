@@ -80,7 +80,14 @@ public class Minimax {
         Score score = new Score();
         Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
-        List<Move> moves = getMoves(board,node,gameData,dijkstra,xbot);
+        List<Move> moves = new ArrayList<>();
+        moves.removeIf(move -> move instanceof Move.DoubleMove);
+        moves.removeIf(move -> {
+            List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+            for (ScotlandYard.Ticket ticket : move.tickets())
+                tickets.add(ticket);
+            return tickets.contains(ScotlandYard.Ticket.SECRET);
+        });
         if (moves.size() <= 0 || depth <= 0)
             return;
         if (moves.get(0).commencedBy().isMrX()) {
@@ -119,33 +126,35 @@ public class Minimax {
     }
 
 
-    public List<Move> getMoves(@Nonnull Board board, TreeNode node, Info gameData, Dijkstra dijkstra,Xbot xbot){ //就是在普通轮只算single 该算double和secret的轮算double和secret
-        //总共有5张secret 两张double，每次double用两张secret，最后剩的一张最后一轮用
-        List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
-        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size() + 1);
-        Boolean tooClose = dijkstra.getDetectivesDistance(gameData.mrX.location(),xbot.getLocAsList(gameData.detectives)).get(0) <= 3;
-        if(afterReveal || tooClose){
-            //如果太近时候没有double了就只用secret
-            if(gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) moves.stream().filter(move -> move instanceof Move.DoubleMove);
-            if(gameData.mrX.has(ScotlandYard.Ticket.SECRET)){
-                moves.removeIf(move -> {
-                    List<ScotlandYard.Ticket> tickets = new ArrayList<>();
-                    for (ScotlandYard.Ticket ticket : move.tickets())
-                        tickets.add(ticket);
-                    return !tickets.contains(ScotlandYard.Ticket.SECRET);
-                });
-            }
-        } else {
-            moves.removeIf(move -> move instanceof Move.DoubleMove);
-            moves.removeIf(move -> {
-                List<ScotlandYard.Ticket> tickets = new ArrayList<>();
-                for (ScotlandYard.Ticket ticket : move.tickets())
-                    tickets.add(ticket);
-                return tickets.contains(ScotlandYard.Ticket.SECRET);
-            });
-        }
-        return moves;
-    }
+//    public List<Move> getMoves(@Nonnull Board board, TreeNode node, Info gameData, Dijkstra dijkstra,Xbot xbot){ //就是在普通轮只算single 该算double和secret的轮算double和secret
+//        //总共有5张secret 两张double，每次double用两张secret，最后剩的一张最后一轮用
+//        List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
+//        Boolean afterReveal  = board.getSetup().moves.get(board.getMrXTravelLog().size());
+//        Boolean tooClose = dijkstra.getDetectivesDistance(gameData.mrX.location(),xbot.getLocAsList(gameData.detectives)).get(0) <= 3;
+//        if(afterReveal || tooClose){
+//            //如果太近时候没有double了就只用secret
+//            if(gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) moves.stream().filter(move -> move instanceof Move.DoubleMove);
+//            if(gameData.mrX.has(ScotlandYard.Ticket.SECRET)){
+//                moves.removeIf(move -> {
+//                    List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+//                    for (ScotlandYard.Ticket ticket : move.tickets())
+//                        tickets.add(ticket);
+//                    return !tickets.contains(ScotlandYard.Ticket.SECRET);
+//                });
+//                return moves;
+//            }
+//        } else {
+//            moves.removeIf(move -> move instanceof Move.DoubleMove);
+//            moves.removeIf(move -> {
+//                List<ScotlandYard.Ticket> tickets = new ArrayList<>();
+//                for (ScotlandYard.Ticket ticket : move.tickets())
+//                    tickets.add(ticket);
+//                return tickets.contains(ScotlandYard.Ticket.SECRET);
+//            });
+//            return moves;
+//        }
+//        return null;
+//    }
 
     public List<Integer> getMrxPossibleLocation(Board board) { //得到mrX所有可能在的位置
         List<Integer> mrXPossibleLocation = new ArrayList<Integer>();
