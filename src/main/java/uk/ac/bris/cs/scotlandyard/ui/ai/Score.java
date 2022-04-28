@@ -28,7 +28,7 @@ public class Score {
         List<Integer> distance = dijkstra.getDetectivesDistance(getDestination(move), xbot.getLocAsList(gameData.detectives));
         int shortest = distance.get(0);
         int average = (int) distance.stream().mapToDouble(Number::doubleValue).average().getAsDouble();
-        return shortest * 10 + average;
+        return shortest * 9 + average;
     }
 
     public int transportationScore(@Nonnull Board board, int loc) { //move.source()傳位置
