@@ -81,6 +81,12 @@ public class Minimax {
         Dijkstra dijkstra = new Dijkstra(node.nodeGameState);
         Xbot xbot = new Xbot();
         List<Move> moves = new ArrayList<>(node.nodeGameState.getAvailableMoves().stream().toList());
+//        List<Move> movesCopy = new ArrayList<>();
+//        movesCopy.addAll(moves);
+//        movesCopy.removeIf(move -> dijkstra.getDetectivesDistance(xbot.getDestination(move), xbot.getLocAsList(gameData.detectives)).get(0) <= 1);
+//        if (!movesCopy.isEmpty()){
+//            moves = movesCopy;
+//        }
         //only consider single moves
         moves.removeIf(move -> move instanceof Move.DoubleMove);
         moves.removeIf(move -> {
