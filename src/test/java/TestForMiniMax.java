@@ -14,8 +14,8 @@ import static uk.ac.bris.cs.scotlandyard.model.Piece.MrX.MRX;
 import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import static uk.ac.bris.cs.scotlandyard.model.ScotlandYard.defaultDetectiveTickets;
 
-public class Test1 {
-    public Test1() {
+public class TestForMiniMax {
+    public TestForMiniMax() {
         setup();
     }
 
