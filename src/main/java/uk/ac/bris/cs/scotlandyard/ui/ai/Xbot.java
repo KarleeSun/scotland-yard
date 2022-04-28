@@ -14,6 +14,8 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 public class Xbot implements Ai {
     private Piece.MrX MRX;
 
+
+    //name of this AI
     @Nonnull
     @Override
     public String name() {
@@ -27,15 +29,25 @@ public class Xbot implements Ai {
         Dijkstra dijkstra = new Dijkstra(board);
         int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)).get(0);
         System.out.println("shortest: " + dijkstra.getDetectivesDistance(gameData.mrX.location(), getLocAsList(gameData.detectives)));
-        List<Move> moves = board.getAvailableMoves().stream().toList();
-        Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size());
+        List<Move> moves = new ArrayList<>();
+        moves.addAll(board.getAvailableMoves().stream().toList());
+        Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size() > 1 ? board.getMrXTravelLog().size() - 1 : 1);
         Boolean doubleOrSecret = false;
         //use DOUBLE because the nearest detective is one step away from Mr X
         //only choose from DOUBLE MOVE, may or may not use SECRET
         if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) { //situation 1
             System.out.println("situation: double");
             doubleOrSecret = true;
-            moves = board.getAvailableMoves().stream().filter(move -> move instanceof Move.DoubleMove).toList();
+            List<Move.DoubleMove> doubleMoves = new ArrayList<>();
+            for(Move m : moves){
+                if(m instanceof Move.DoubleMove)
+                    doubleMoves.add((Move.DoubleMove)m);
+            }
+            System.out.println("suppose to be only double moves: " + doubleMoves);
+            doubleMoves.stream().filter(m -> m instanceof Move.DoubleMove).map(m -> (Move.DoubleMove)m)
+                            .filter(m -> !(m.ticket1.equals(ScotlandYard.Ticket.SECRET) && m.ticket2.equals(ScotlandYard.Ticket.SECRET)));
+            System.out.println("suppose to remove both secret: " + doubleMoves);
+            moves.addAll(doubleMoves);
         }
         //use SECRET because it right after reveal and the nearest detective is one step away from Mr x
         //only choose from SECRET Single move
@@ -49,6 +61,7 @@ public class Xbot implements Ai {
                 return tickets.contains(ScotlandYard.Ticket.SECRET);
             });
         }
+        Move bestMove = null;
         //choose move if one of the above condition fulfilled
         if (doubleOrSecret) {
             return moveGivesLongestDistance(moves, board);
@@ -77,14 +90,12 @@ public class Xbot implements Ai {
     }
     //return a move that result the longest distance between detectives
     public Move moveGivesLongestDistance(List<Move> possibleMoves, @Nonnull Board board){
-        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX),
-                getDetectivePlayers(board, getAllDetectives(board)));
+        Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX), getDetectivePlayers(board, getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
         int furthestMoveDistance = 0;
         Move bestMove = null;
         for (Move move : possibleMoves) {
-            int currentDistance = dijkstra.getDetectivesDistance(getDestination(move),
-                    getLocAsList(gameData.detectives)).get(0);
+            int currentDistance = dijkstra.getDetectivesDistance(getDestination(move), getLocAsList(gameData.detectives)).get(0);
             if (currentDistance > furthestMoveDistance) {
                 furthestMoveDistance = currentDistance;
                 bestMove = move;
@@ -93,11 +104,12 @@ public class Xbot implements Ai {
         return bestMove;
     }
 
-    // get all detective pieces as Piece.Detective
+
     public List<Piece.Detective> getAllDetectives(@Nonnull Board board) {
         List<Piece> allDetectivePieces = new ArrayList<Piece>();
         allDetectivePieces.addAll(board.getPlayers());
         allDetectivePieces.remove("MRX");
+
         List<Piece.Detective> detectives = new ArrayList<>();
         for (Piece detective : allDetectivePieces) {
             if (detective.isDetective()) detectives.add((Piece.Detective) detective);
@@ -119,34 +131,33 @@ public class Xbot implements Ai {
         return detectiveTickets;
     }
 
-    // get current locations of all detectives as a list
+
     public List<Integer> getLocAsList(List<Player> detectivesPlayer) {
         List<Integer> detectivesLoc = new ArrayList<>();
-        detectivesPlayer.forEach(d -> detectivesLoc.add(d.location()));
+        for (Player d : detectivesPlayer) {
+            detectivesLoc.add(d.location());
+        }
         return detectivesLoc;
     }
 
-    // make Mr X a player
+
     public Player getMrXPlayer(@Nonnull Board board, Piece mrX) {
-        return new Player(mrX, ImmutableMap.copyOf(getCurrentMrXTickets(board)),
-                board.getAvailableMoves().stream().iterator().next().source());
+        return new Player(mrX, ImmutableMap.copyOf(getCurrentMrXTickets(board)), board.getAvailableMoves().stream().iterator().next().source());
     }
 
-    // make detectives players in a list
     public List<Player> getDetectivePlayers(@Nonnull Board board, List<Piece.Detective> detectives) {
         List<Player> detectivePlayers = new ArrayList<>();
-        detectives.forEach(d ->  detectivePlayers.add(
-                new Player(d,
-                        ImmutableMap.copyOf(getCurrentDetectiveTickets(board, d)),
-                        board.getDetectiveLocation(d).get())));
+        for (Piece.Detective d : detectives) {
+            Player detective = new Player(d, ImmutableMap.copyOf(getCurrentDetectiveTickets(board, d)), board.getDetectiveLocation(d).get());
+            detectivePlayers.add(detective);
+        }
         return detectivePlayers;
     }
 
-    // get the final destination of either a single move or double move
     public int getDestination(Move move) {
         int distance = move instanceof Move.SingleMove
-                ? ((Move.SingleMove) move).destination
-                : ((Move.DoubleMove) move).destination2;
+                ? ((Move.SingleMove) move).destination : ((Move.DoubleMove) move).destination2;
         return distance;
     }
+
 }
