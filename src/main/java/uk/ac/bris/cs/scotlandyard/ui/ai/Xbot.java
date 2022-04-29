@@ -13,6 +13,7 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 
 public class Xbot implements Ai {
     private Piece.MrX MRX;
+
     @Nonnull
     @Override
     public String name() {
@@ -28,9 +29,9 @@ public class Xbot implements Ai {
         int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(),
                 getLocAsList(gameData.detectives)).get(0);
         List<Move> moves = new ArrayList<>(board.getAvailableMoves().stream().toList());
+        Boolean beforeReveal = board.getSetup().moves.get(board.getMrXTravelLog().size() + 1);
         Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size() > 1
-                ? board.getMrXTravelLog().size() - 1
-                : 1);
+                ? board.getMrXTravelLog().size() - 1 : 1);
         boolean doubleOrSecret = false;
 
         /*Use DOUBLE because the nearest detective is one step away from Mr X
@@ -38,17 +39,17 @@ public class Xbot implements Ai {
          */
         if (shortest <= 1 && gameData.mrX.has(ScotlandYard.Ticket.DOUBLE)) {
             doubleOrSecret = true;
-            //remove secret ticket
+            //remove if both moves use secret tickets
             moves.removeIf(move -> {
                 List<ScotlandYard.Ticket> tickets = new ArrayList<>();
                 move.tickets().forEach(tickets::add);
-                return tickets.contains(ScotlandYard.Ticket.SECRET);
+                return tickets.stream().filter(t -> t.equals(ScotlandYard.Ticket.SECRET)).toList().size() == 2;
             });
         }
         /*Use SECRET because it right after reveal and the nearest detective is one step away from Mr x
           only choose from SECRET move
          */
-        else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 1) {
+        else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3 && !beforeReveal) {
             moves = moves.stream().filter(move -> {
                 List<ScotlandYard.Ticket> tickets = new ArrayList<>();
                 move.tickets().forEach(tickets::add);
@@ -72,14 +73,15 @@ public class Xbot implements Ai {
         /*The best move in long run might be the worst move in short run
           if the best move pick is one step away from detectives, choose another move that is the best for current
          */
-        if(dijkstra.getDetectivesDistance((((Move.SingleMove) maxScoreNode.getMove()).destination),
+        if (dijkstra.getDetectivesDistance((((Move.SingleMove) maxScoreNode.getMove()).destination),
                 getLocAsList(gameData.detectives)).get(0) <= 1) {
             return moveGivesLongestDistance(moves, board);
         }
         return maxScoreNode.getMove();
     }
+
     //return a move that result the longest distance between detectives
-    public Move moveGivesLongestDistance(List<Move> possibleMoves, @Nonnull Board board){
+    public Move moveGivesLongestDistance(List<Move> possibleMoves, @Nonnull Board board) {
         Minimax.Info gameData = new Minimax.Info(getMrXPlayer(board, MRX), getDetectivePlayers(board, getAllDetectives(board)));
         Dijkstra dijkstra = new Dijkstra(board);
         int furthestMoveDistance = 0;
