@@ -29,7 +29,9 @@ public class Xbot implements Ai {
         int shortest = dijkstra.getDetectivesDistance(gameData.mrX.location(),
                 getLocAsList(gameData.detectives)).get(0);
         List<Move> moves = new ArrayList<>(board.getAvailableMoves().stream().toList());
-        Boolean beforeReveal = board.getSetup().moves.get(board.getMrXTravelLog().size() + 1);
+        // not use secret ticket when its in first two rounds or during the reveal rounds
+        Boolean notUseSecret = board.getSetup().moves.get(board.getMrXTravelLog().size())
+                || board.getMrXTravelLog().size() < 3;
         Boolean afterReveal = board.getSetup().moves.get(board.getMrXTravelLog().size() > 1
                 ? board.getMrXTravelLog().size() - 1 : 1);
         boolean doubleOrSecret = false;
@@ -49,7 +51,7 @@ public class Xbot implements Ai {
         /*Use SECRET because it right after reveal and the nearest detective is one step away from Mr x
           only choose from SECRET move
          */
-        else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3 && !beforeReveal) {
+        else if (gameData.mrX.has(ScotlandYard.Ticket.SECRET) && afterReveal && shortest <= 3 && !notUseSecret) {
             moves = moves.stream().filter(move -> {
                 List<ScotlandYard.Ticket> tickets = new ArrayList<>();
                 move.tickets().forEach(tickets::add);
