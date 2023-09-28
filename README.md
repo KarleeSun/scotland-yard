@@ -1,5 +1,5 @@
 # ScotlandYard
-
+This is an implementation of the board game - Scotland Yard, with a AI Mr.X
 <br>
 <br>
 <br>
